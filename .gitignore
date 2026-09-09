@@ -1,0 +1,15 @@
+# Rust build output (keep Cargo.lock for application reproducibility)
+/target/
+**/target/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Generated output
+/dist/
+/build/
+/logs/
+*.log
+.DS_Store
