@@ -1,0 +1,42 @@
+name: Native checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned toolchain
+        shell: pwsh
+        run: |
+          $toolchain = (Select-String -Path rust-toolchain.toml -Pattern '^channel = "(.+)"').Matches.Groups[1].Value
+          rustup toolchain install $toolchain --profile minimal --component rustfmt --component clippy
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup target add --toolchain $toolchain ${{ matrix.target }}
+          exit $LASTEXITCODE
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Lints
+        run: cargo clippy --workspace --all-targets --locked --target ${{ matrix.target }} -- -D warnings
+      - name: Workspace tests including protocol and localhost UDP (no window required)
+        run: cargo test --workspace --locked --target ${{ matrix.target }}
+      - name: Headless server without client or GPU dependencies
+        run: cargo check -p burnhop-server --locked --target ${{ matrix.target }}
+      - name: Native client and headless server executables
+        run: cargo build --workspace --locked --target ${{ matrix.target }}

@@ -7,26 +7,42 @@
 
 ## 1. Native foundation and movement
 
-- [ ] Inspect the reference movement, camera, collision, and map data.
-- [ ] Verify compatible Rust/Bevy versions and establish a minimal Cargo workspace.
-- [ ] Separate gameplay simulation from client rendering.
-- [ ] Open the game on Apple Silicon macOS and Windows.
-- [ ] Add one arena, a controllable character, jump, jetpack, and camera.
-- [ ] Compare movement feel to the browser reference; record hardware and checks.
+- [x] Inspect the reference movement, camera, collision, and map data; see `docs/REFERENCE_GAMEPLAY.md`.
+- [x] Verify and pin Rust 1.98.1 / Bevy 0.19.1; create native client and gameplay-core workspace crates.
+- [x] Establish a dependency-free gameplay-core boundary; simulation itself is deferred.
+- [x] Add formatting, Clippy, locked builds, and macOS ARM64 / Windows x64 CI configuration (CI execution pending).
+- [x] Compile, visually inspect the native placeholder window, and verify close on Apple Silicon macOS (M1 Pro, macOS 26.6.2; local inspection wrapper).
+- [ ] Build and open the game on Windows hardware; CI is not a hardware playtest.
+- [x] Add the reference practice arena, controllable character, jump/ledge grace/buffer, direct jet/fuel, swept rectangular collision, interpolation and bounded following camera.
+- [x] Add 17 shared-core and 10 client input/timing/route tests; local formatting, strict Clippy, tests and locked build pass.
+- [x] Run the actual Mac renderer through eight scripted movement checkpoints; exercise native A/D, Space, R, resize, focus pause/resume and close. See the movement handoff for the physical Shift testing limitation.
+- [x] Record user-reported Mac movement/control approval with placeholder graphics (2026-09-11); see the movement handoff addendum. Individual physical Shift/focus subcase results were not supplied; agent verification remains separately described.
+- [ ] Run the authored GitHub CI and verify Windows compilation separately from Windows hardware playtesting.
 
 ## 2. Small combat loop
 
-- [ ] Add two weapons, hit resolution, health, death, and respawn.
-- [ ] Add a readable minimal HUD and practice flow.
-- [ ] Verify important collision and gameplay behavior.
+- [x] Add pistol/M416 held fire, tick timers, finite ammunition, reload/switching, authoritative rays/damage and both actors' death/respawn.
+- [x] Add camera-projected mouse aim, reticle/barrels, health/ammo/fuel/reload/life HUD, confirmed shot/impact flashes, stationary attacking bot and F5 reset.
+- [x] Verify 54 tests, formatting, strict Clippy, locked Mac build and zero-dependency core; preserve all 17 movement tests and movement tuning.
+- [x] Run seven scripted combat checkpoints in the actual Mac Metal renderer; exercise native clicks, R, 1/2, F5, movement, damage/death/respawn, resize and focus recovery.
+- [x] Record user-reported Mac combat-feel approval from the Agent 4 brief; see [03-combat.md](handoffs/03-combat.md). Individual physical held-input/focus subcases were not supplied and remain distinct from this approval.
+- [ ] Validate Windows compilation and GitHub CI; no success is inferred from Mac checks.
+- [ ] Validate combat on Windows hardware/GPU.
 
 ## 3. Authoritative multiplayer
 
-- [ ] Select networking transport/library and document the decision.
-- [ ] Run the shared gameplay core in a headless Rust server.
-- [ ] Connect two clients with prediction, reconciliation, and remote presentation.
-- [ ] Test eight players, jitter, packet loss, disconnects, and frame/server timing.
-- [ ] Validate an actual Mac-to-Windows match.
+- [x] Select and pin Renet 2.0.0 / renet_netcode 2.0.0 after official documentation and source review.
+- [x] Generalize dependency-free actor rules and preserve offline practice through an adapter and pre-refactor trace check.
+- [x] Run one headless Rust server at 60 Hz with bounded overload, two assigned actors, shared combat and no bot.
+- [x] Connect two native clients with movement prediction/reconciliation, authoritative combat, remote interpolation and explicit connection states.
+- [x] Validate ownership, compatibility, malformed/stale/duplicate input, bounds, missing input, lifecycle, effects and interpolation; exercise real localhost UDP plus injected message delay/jitter/loss/reordering.
+- [x] Exercise two actual Mac Metal clients with injected movement/fire and both kill/death/respawn cycles; separately check native clicks, reload, F5 exclusion, focus loss, departure, fresh native join and lost-server UI.
+- [x] Preserve offline practice and run its actual native combat regression route; see [04-multiplayer.md](handoffs/04-multiplayer.md).
+- [x] Record user-reported participation in a successful two-player multiplayer playtest and milestone approval (2026-09-11); network conditions, platforms and individual checklist results were not supplied.
+- [ ] Document physical held mouse/Shift, cursor-exit and focus subcases; general approval does not establish each result.
+- [ ] Validate GitHub CI and Windows compilation for the exact pushed checkpoint commit.
+- [ ] Validate Windows hardware/GPU and an actual Mac-to-Windows match.
+- [ ] Measure internet latency/loss and frame/server timing on real connections. Eight-player scaling is a later milestone.
 
 ## 4. Hosting and Go services
 
@@ -45,4 +61,4 @@
 
 ## Latest handoff
 
-2026-09-09: Repository documentation only. No runtime code or tests exist yet. Next action: inspect reference gameplay and select the minimal Rust/Bevy foundation. No performance claims have been validated for the native project.
+2026-09-11: Foundation, movement, combat and two-player multiplayer have been reviewed. Mac movement/combat approvals and successful multiplayer playtest participation/approval are recorded as user-reported evidence; multiplayer network conditions and individual physical-input checks were not supplied. The checkpoint task is saving the existing implementation without changing approved tuning, verifying local formatting, strict Clippy, all 80 tests and locked Mac builds, and running GitHub CI. CI and Windows compilation are still pending; hardware/GPU, Mac-to-Windows and internet validation remain separate work. See the dated addendum in [04-multiplayer.md](handoffs/04-multiplayer.md); final verification and run links will be recorded in `docs/handoffs/05-checkpoint.md`.
