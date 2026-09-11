@@ -32,6 +32,8 @@ jobs:
           exit $LASTEXITCODE
       - name: Formatting
         run: cargo fmt --all -- --check
+      - name: Approved practice regression before renderer compilation
+        run: cargo test -p burnhop-gameplay-core --test practice_regression --locked --target ${{ matrix.target }} -- --nocapture
       - name: Lints
         run: cargo clippy --workspace --all-targets --locked --target ${{ matrix.target }} -- -D warnings
       - name: Workspace tests including protocol and localhost UDP (no window required)
