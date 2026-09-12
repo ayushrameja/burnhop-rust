@@ -60,7 +60,7 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 - [x] Address the compact-HUD review finding: short edge readouts, collapsed F1 guidance, and native upper-platform/edge-flight, combat and connection-error checks at minimum, medium and desktop sizes. See milestone 06 follow-up.
 - [x] Compact-HUD fix passed final review, as recorded in the checkpoint brief (2026-09-12); user visual approval, screenshot review and automated checks remain separate evidence.
 - [ ] Windows hardware/GPU review.
-- [ ] Save the approved visual milestone and verify macOS ARM64 / Windows x64 CI for the exact pushed commit (authorized 2026-09-12).
+- [x] Save approved visuals as `bf34b95bf0f9953b85635b8ec48a645ccfba45a9`; macOS ARM64 and Windows x64 CI passed all 90 tests and locked builds. See [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md). Later commits require their own CI verification.
 
 ## 5. Multiplayer expansion — after visual review
 
@@ -85,4 +85,4 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 
 ## Latest handoff
 
-2026-09-12: User visual/animation approval and the passed compact-HUD review are recorded in [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md). The user separately authorized saving this approved milestone to the existing repository and running CI. Fresh local formatting, strict Clippy, all 90 tests, locked host and explicit Mac target builds, and independent core/server checks pass. The reviewed gameplay/protocol/server, tuning, pinned dependencies and workflow remain unchanged. Exact-commit macOS/Windows CI is pending the authorized push. Windows hardware/GPU, Mac-to-Windows multiplayer, unreported physical held-input/focus cases and real internet measurements remain unverified. [05-checkpoint.md](handoffs/05-checkpoint.md) preserves earlier CI evidence.
+2026-09-12: [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) records the saved approved visual milestone and passed compact-HUD review, fresh local checks, and successful exact-implementation-commit macOS ARM64 / Windows x64 CI (90 tests and locked builds on each). Gameplay, protocol, server, tuning and pinned dependencies remain unchanged. The documentation commit containing that handoff triggers a separate full CI run, which must be checked by exact SHA before final sign-off. Windows hardware/GPU, Mac-to-Windows multiplayer, unreported physical held-input/focus cases and real internet measurements remain pending. [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) retains native screenshot/playtest evidence and its limits; [05-checkpoint.md](handoffs/05-checkpoint.md) preserves earlier CI history.

@@ -161,3 +161,8 @@ Fresh checkpoint checks passed: formatting, strict workspace Clippy with all tar
 Reviewed client visual source, compact-HUD regressions, documentation and all 22 indexed PNG evidence files for commit scope and artifacts. No credential-pattern matches, executables or symlinks were found among the 37 candidate files. Selected current minimum-platform and connection-error screenshots were inspected again; this is screenshot review, not a new native or human hardware playtest. Original captures, including the obstructed HUD image, remain historical evidence. Raw captures, logs, app wrappers and build output are excluded.
 
 Exact pushed-commit macOS ARM64 / Windows x64 CI will be recorded in the visual checkpoint after the implementation run completes. This checkpoint makes no new hardware, human input, cross-platform multiplayer or internet claim. Windows CI compilation and headless tests cannot validate Windows GPU rendering or human playtest feel.
+
+
+## Saved implementation and CI — 2026-09-12
+
+The approved visual milestone and compact-HUD correction are now saved as `bf34b95bf0f9953b85635b8ec48a645ccfba45a9` on `main`. Both macOS ARM64 and Windows x64 passed [Native checks 34681615290](https://github.com/ayushrameja/burnhop-rust/actions/runs/34681615290), including all 90 tests, strict lint and locked builds. No implementation fix was required. See [07-visual-checkpoint.md](07-visual-checkpoint.md) for exact job evidence and limitations. Earlier uncommitted/CI-pending statements remain historical; Windows hardware/GPU, actual cross-platform multiplayer, internet conditions and unreported physical-input checks remain pending.
