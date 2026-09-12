@@ -1,6 +1,6 @@
 # 09 — Reviewed eight-player checkpoint
 
-2026-09-12. Save the manager-reviewed eight-player milestone to the existing [Burnhop Rust repository](https://github.com/ayushrameja/burnhop-rust), then verify the exact final pushed commit on macOS ARM64 and Windows x64. The brief reports no blocking manager-review findings. **New human playtest approval remains pending.**
+2026-09-12. The manager-reviewed eight-player milestone is saved in the existing [Burnhop Rust repository](https://github.com/ayushrameja/burnhop-rust). Its implementation commit passed macOS ARM64 and Windows x64 CI; the final documentation commit requires its own exact-SHA verification. The brief reports no blocking manager-review findings. **New human playtest approval remains pending.**
 
 ## Scope and preservation
 
@@ -33,9 +33,18 @@ The original 17 movement tests and frozen 12,000-tick practice regression pass u
 
 ## Save and GitHub Actions
 
-At preparation, the milestone is ready for the authorized normal commit/push. Exact-SHA CI is pending until pushed. Both existing jobs remain: `macos-14` / `aarch64-apple-darwin` and `windows-2022` / `x86_64-pc-windows-msvc`. They run formatting, the early frozen practice regression, strict all-target Clippy, workspace tests, an independent headless-server check and locked executable builds. Long soak remains opt-in.
+Implementation commit: [`437b6b67db0e07e9f237b54d90e90817d5c69748`](https://github.com/ayushrameja/burnhop-rust/commit/437b6b67db0e07e9f237b54d90e90817d5c69748), **Save reviewed eight-player multiplayer milestone**, normally pushed to `origin/main`. It contains 64 reviewed files. Immediately after push, the working tree was clean and `HEAD` matched `origin/main` with zero ahead/behind. No force push, merge, runtime fix or CI fix was needed.
 
-Record implementation CI results here after completion. The documentation commit recording those results also requires its own exact-SHA verification in the final checkpoint response; do not reuse a parent commit's green result or repeatedly commit only to update the final CI link.
+[Native checks 34699835294](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294), push event, exact `headSha` **`437b6b67db0e07e9f237b54d90e90817d5c69748`**, completed with conclusion **success**.
+
+| Target | Runner | Result |
+| --- | --- | --- |
+| [macOS ARM64](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294/job/103569513330) | `macos-14` / `aarch64-apple-darwin` | Passed, completed 2026-09-12 14:50:28 UTC |
+| [Windows x64](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294/job/103569513149) | `windows-2022` / `x86_64-pc-windows-msvc` | Passed, completed 2026-09-12 15:04:52 UTC |
+
+Both completed job logs confirm **102 workspace tests passed, zero failed and zero ignored**, plus the separately run early frozen practice regression. Every job step passed: formatting, strict all-target Clippy, workspace tests, independent headless-server check and locked client/server executable builds. Windows spent most of its longer test stage compiling dependencies; the live log confirmed ongoing compilation before the suite passed. Long soak stays opt-in. No external blocker was observed.
+
+The documentation commit recording these results also triggers the full workflow and requires independent exact-SHA verification in the final checkpoint response. These links validate the implementation commit only. Do not reuse a parent commit's green result or repeatedly commit merely to update the final CI link. Read the final checkpoint response or query GitHub Actions for the current `git rev-parse HEAD` to verify the final documentation SHA.
 
 ## Outstanding validation
 

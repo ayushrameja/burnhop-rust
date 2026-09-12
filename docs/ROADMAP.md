@@ -75,7 +75,8 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 - [x] Local 102 tests, formatting, strict Clippy, locked builds and dependency boundaries. Preserve short Mac/Windows CI; long harness stays opt-in.
 - [ ] Human two-to-eight-player spawn fairness, delayed aiming and physical held-input/focus checklist.
 - [x] Manager review reported no blocking issues; fresh checkpoint checks pass all 102 tests, formatting, strict Clippy, locked builds and dependency boundaries.
-- [ ] Complete authorized save and verify exact final SHA on macOS ARM64 and Windows x64 CI; see checkpoint 09.
+- [x] Save reviewed implementation as `437b6b67db0e07e9f237b54d90e90817d5c69748`; both platform CI jobs pass 102 tests and locked executable builds in [run 34699835294](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294).
+- Final checkpoint response must independently verify this documentation commit's exact SHA on both targets; implementation CI is not evidence for later commits.
 - [ ] Windows hardware/GPU and an actual Mac-to-Windows match.
 - [ ] Measure real internet latency/loss and a broader range of hardware before setting capacity/performance expectations.
 
@@ -97,4 +98,4 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 
 ## Latest handoff
 
-2026-09-12: [09-eight-player-checkpoint.md](handoffs/09-eight-player-checkpoint.md) records the authorized reviewed save, fresh local checks, evidence correction and outstanding validation. [08-eight-player-reliability.md](handoffs/08-eight-player-reliability.md) records the eight-player implementation, protocol/scheduling decisions, controlled packet tests, 605-second soak, actual native review and remaining limits. The checkpoint brief reports manager review with no blocking issues and authorizes normal commit/push; exact final-commit CI must be verified independently. [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) preserves the saved visual/CI baseline; [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) preserves the approved art direction and earlier native evidence. Windows hardware, real internet, eight-human feel and current-change CI remain outstanding.
+2026-09-12: [09-eight-player-checkpoint.md](handoffs/09-eight-player-checkpoint.md) records the authorized reviewed save, fresh local checks, evidence correction and outstanding validation. [08-eight-player-reliability.md](handoffs/08-eight-player-reliability.md) records the eight-player implementation, protocol/scheduling decisions, controlled packet tests, 605-second soak, actual native review and remaining limits. Manager-reviewed implementation `437b6b6` is normally pushed and green on both CI targets. This documentation commit needs its own exact-SHA check in the final checkpoint response. [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) preserves the saved visual/CI baseline; [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) preserves the approved art direction and earlier native evidence. Windows hardware, real internet and eight-human feel remain outstanding; final documentation-SHA CI must be verified separately.
