@@ -1,0 +1,5 @@
+ONLINE assigned actor=One generation=1 start_tick=65
+ONLINE CONNECTED - Player 1
+ONLINE lifecycle actor=One tick=682 life=Dead { remaining_ticks: 180 } deaths=1
+ONLINE lifecycle actor=One tick=862 life=Alive deaths=1
+ONLINE PLAYTEST COMPLETE actor=One: movement, jump, jet, fire, kill, death, respawn through real UDP; injected input

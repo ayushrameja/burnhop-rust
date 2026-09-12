@@ -39,6 +39,9 @@ impl Client {
             if impaired && frame.is_multiple_of(11) {
                 continue;
             }
+            if self.incoming.len() == SNAPSHOT_LIMIT {
+                self.incoming.pop_front();
+            }
             self.incoming
                 .push_back((frame + if impaired { frame % 4 } else { 0 }, snapshot));
         }
@@ -61,13 +64,21 @@ impl Client {
             let mut command = InputCommand::default();
             if let Some(snapshot) = p.latest {
                 let id = p.welcome.actor;
-                if let Some(other) = snapshot.state.actors[id.other().index()] {
+                if let Some(other) = snapshot.state.actors[ActorId::ALL[id.index() ^ 1].index()] {
                     if self.fire
                         && p.local
                             .is_some_and(|a| !a.require_neutral && a.combat.alive())
                     {
                         command.aim_at = Some(body_center(other.movement.body));
                         command.fire_held = true;
+                        let dx = other.movement.body.x - p.local.unwrap().movement.body.x;
+                        if dx.abs() > 1200. {
+                            command.move_x = if dx > 0. {
+                                MoveAxis::Right
+                            } else {
+                                MoveAxis::Left
+                            };
+                        }
                         command.select_weapon = Some(WeaponId::M416);
                         command.reload_pressed = p.local.unwrap().combat.weapon().ammo == 0;
                     }
@@ -95,7 +106,7 @@ impl Client {
             }
         }
         self.outgoing = waiting;
-        assert!(self.incoming.len() <= 8 && self.outgoing.len() <= 8);
+        assert!(self.incoming.len() <= SNAPSHOT_LIMIT && self.outgoing.len() <= 8);
         self.network.flush();
     }
 }
@@ -108,7 +119,7 @@ fn frame(server: &mut Server, clients: &mut [&mut Client], tick: u64, impaired: 
     server.snapshot();
     server.flush();
     // Give real UDP I/O a scheduling opportunity; simulation time is explicit.
-    std::thread::sleep(Duration::from_micros(100));
+    std::thread::sleep(Duration::from_millis(1));
 }
 fn duel(impaired: bool) {
     let mut server = Server::bind("127.0.0.1:0".parse().unwrap()).unwrap();
@@ -164,7 +175,8 @@ fn duel(impaired: bool) {
     }
     assert!(
         a_killed && b_killed,
-        "both players must land lethal shared-core damage"
+        "both players must land lethal shared-core damage: {:?}",
+        server.state
     );
     assert!(a.life_changes >= 2 && b.life_changes >= 2);
     let old = b.prediction.as_ref().unwrap().welcome;
@@ -192,8 +204,9 @@ fn duel(impaired: bool) {
         server.tick();
         server.snapshot();
         server.flush();
+        std::thread::sleep(Duration::from_millis(1));
     }
-    assert!(server.state.actors[new.actor.other().index()].is_none());
+    assert!(server.state.actors[ActorId::ALL[new.actor.index() ^ 1].index()].is_none());
 }
 #[test]
 fn real_udp_server_two_synthetic_clients_duel_disconnect_and_fresh_join() {
@@ -220,6 +233,7 @@ fn real_transport_rejects_incompatible_clients_before_actor_assignment() {
         server.tick();
         server.snapshot();
         server.flush();
+        std::thread::sleep(Duration::from_millis(1));
     }
     assert_eq!(server.player_count(), 0);
     assert_eq!(client.status, ConnectionState::CompatibilityError);
@@ -236,7 +250,7 @@ fn real_transport_rejects_actor_spoofing_and_malformed_messages_cleans_up() {
         let bytes = if spoof {
             encode(&Message::Inputs([
                 Some(NetInput {
-                    actor: p.welcome.actor.other(),
+                    actor: ActorId::ALL[p.welcome.actor.index() ^ 1],
                     sequence: p.next_sequence,
                     command: InputCommand {
                         tick: p.next_sequence,
@@ -269,30 +283,99 @@ fn headless_clock_bounds_overload_and_does_not_replay_elapsed_backlog() {
 }
 
 #[test]
-fn real_transport_rejects_a_third_player_and_an_input_message_flood() {
+fn real_transport_rejects_ninth_player_and_an_input_message_flood() {
     let mut server = Server::bind("127.0.0.1:0".parse().unwrap()).unwrap();
-    let mut a = Client::new(&server, 1001);
-    let mut b = Client::new(&server, 1002);
-    for tick in 0..40 {
-        frame(&mut server, &mut [&mut a, &mut b], tick, false);
+    let mut clients: Vec<_> = (0..8).map(|i| Client::new(&server, 1000 + i)).collect();
+    for tick in 0..80 {
+        frame(
+            &mut server,
+            &mut clients.iter_mut().collect::<Vec<_>>(),
+            tick,
+            false,
+        );
     }
-    let mut third = Client::new(&server, 1003);
-    for tick in 40..80 {
-        frame(&mut server, &mut [&mut a, &mut b, &mut third], tick, false);
+    assert_eq!(server.player_count(), 8);
+    let mut ninth = Client::new(&server, 2000);
+    for tick in 80..160 {
+        let mut refs: Vec<_> = clients.iter_mut().collect();
+        refs.push(&mut ninth);
+        frame(&mut server, &mut refs, tick, false);
     }
-    assert_eq!(server.player_count(), 2);
-    assert!(third.network.status.terminal());
-    // Valid-shaped duplicates still consume the message-rate allowance.
+    assert_eq!(server.player_count(), 8);
+    assert!(
+        matches!(&ninth.network.status, ConnectionState::Disconnected(reason) if reason.contains("Full")),
+        "{:?}",
+        ninth.network.status
+    );
     for _ in 0..30 {
-        a.network
+        clients[0]
+            .network
             .connection
             .send_message(STATE, encode(&Message::Inputs([None; 3])));
     }
-    a.network.flush();
-    for tick in 80..100 {
-        frame(&mut server, &mut [&mut a, &mut b], tick, false);
+    for tick in 160..200 {
+        frame(
+            &mut server,
+            &mut clients.iter_mut().collect::<Vec<_>>(),
+            tick,
+            false,
+        );
     }
-    assert_eq!(server.player_count(), 1);
-    assert!(a.network.status.terminal());
-    assert_eq!(b.network.status, ConnectionState::Connected);
+    assert_eq!(server.player_count(), 7);
+    assert!(clients[0].network.status.terminal());
+    assert!(
+        clients
+            .iter()
+            .skip(1)
+            .all(|c| c.network.status == ConnectionState::Connected)
+    );
+}
+
+#[test]
+fn eight_owners_disconnect_and_fresh_generations_have_clean_state() {
+    let mut server = Server::bind("127.0.0.1:0".parse().unwrap()).unwrap();
+    let mut clients: Vec<_> = (0..8).map(|i| Client::new(&server, 3000 + i)).collect();
+    for tick in 0..80 {
+        frame(
+            &mut server,
+            &mut clients.iter_mut().collect::<Vec<_>>(),
+            tick,
+            false,
+        );
+    }
+    let mut identities: Vec<_> = clients
+        .iter()
+        .map(|c| c.network.welcome.unwrap().actor)
+        .collect();
+    identities.sort();
+    assert_eq!(identities, ActorId::ALL);
+    for index in 0..8 {
+        let old = clients[index].network.welcome.unwrap();
+        clients[index].network.close("test replacement");
+        for tick in 100..120 {
+            frame(
+                &mut server,
+                &mut clients.iter_mut().collect::<Vec<_>>(),
+                tick,
+                false,
+            );
+        }
+        assert!(server.state.actors[old.actor.index()].is_none());
+        clients[index] = Client::new(&server, 4000 + index as u64);
+        for tick in 120..180 {
+            frame(
+                &mut server,
+                &mut clients.iter_mut().collect::<Vec<_>>(),
+                tick,
+                false,
+            );
+        }
+        let fresh = clients[index].network.welcome.unwrap();
+        assert_eq!(old.actor, fresh.actor);
+        assert_ne!(old.generation, fresh.generation);
+        let actor = server.state.actors[fresh.actor.index()].unwrap();
+        assert_eq!((actor.kills, actor.deaths), (0, 0));
+        assert_eq!(actor.combat, Combatant::new(false));
+        assert!(clients[index].prediction.as_ref().unwrap().history_len() <= HISTORY_LIMIT);
+    }
 }

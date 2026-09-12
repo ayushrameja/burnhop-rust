@@ -64,6 +64,9 @@ pub struct NetworkClient {
     hello: Message,
     elapsed: f64,
     last_snapshot: f64,
+    hello_at: f64,
+    initial_rtt: f64,
+    flush_age: f64,
 }
 impl NetworkClient {
     pub fn connect(address: SocketAddr, client_id: u64) -> Result<Self, String> {
@@ -98,6 +101,9 @@ impl NetworkClient {
             hello: Message::Hello { protocol, gameplay },
             elapsed: 0.,
             last_snapshot: 0.,
+            hello_at: 0.,
+            initial_rtt: 0.,
+            flush_age: 0.,
         })
     }
     pub fn update(&mut self, elapsed: Duration) -> Vec<Snapshot> {
@@ -106,6 +112,7 @@ impl NetworkClient {
             return snapshots;
         }
         self.elapsed += elapsed.as_secs_f64();
+        self.flush_age += elapsed.as_secs_f64();
         self.connection.update(elapsed);
         if let Err(error) = self.transport.update(elapsed, &mut self.connection) {
             self.close(&error.to_string());
@@ -114,6 +121,7 @@ impl NetworkClient {
         if self.connection.is_connected() && !self.hello_sent {
             self.connection.send_message(CONTROL, encode(&self.hello));
             self.hello_sent = true;
+            self.hello_at = self.elapsed;
         }
         for channel in [CONTROL, STATE] {
             for count in 0..=64 {
@@ -127,6 +135,7 @@ impl NetworkClient {
                 match decode(&bytes) {
                     Ok(Message::Welcome(w)) if channel == CONTROL && self.welcome.is_none() => {
                         self.welcome = Some(w);
+                        self.initial_rtt = self.elapsed - self.hello_at;
                     }
                     Ok(Message::Reject(Rejection::Compatibility)) => {
                         self.status = ConnectionState::CompatibilityError;
@@ -158,6 +167,10 @@ impl NetworkClient {
         }
         snapshots
     }
+    pub fn measured_rtt(&self) -> f64 {
+        let rtt = self.connection.rtt();
+        if rtt > 0. { rtt } else { self.initial_rtt }
+    }
     pub fn send_inputs(&mut self, bundle: [Option<NetInput>; 3]) {
         if self.status == ConnectionState::Connected {
             self.connection
@@ -171,6 +184,10 @@ impl NetworkClient {
         }
     }
     pub fn flush(&mut self) {
+        if self.flush_age < DT {
+            return;
+        }
+        self.flush_age %= DT;
         if !self.status.terminal()
             && self.connection.is_connected()
             && let Err(e) = self.transport.send_packets(&mut self.connection)

@@ -243,21 +243,35 @@ impl Default for CombatState {
         }
     }
 }
+use crate::{BODY_HEIGHT, BODY_WIDTH, PRACTICE_ARENA};
+pub const MAX_PLAYERS: usize = 8;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ActorId {
     One,
     Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
 }
 impl ActorId {
-    pub const ALL: [Self; 2] = [Self::One, Self::Two];
+    pub const ALL: [Self; MAX_PLAYERS] = [
+        Self::One,
+        Self::Two,
+        Self::Three,
+        Self::Four,
+        Self::Five,
+        Self::Six,
+        Self::Seven,
+        Self::Eight,
+    ];
     pub const fn index(self) -> usize {
         self as usize
     }
-    pub const fn other(self) -> Self {
-        match self {
-            Self::One => Self::Two,
-            Self::Two => Self::One,
-        }
+    pub fn from_index(index: usize) -> Option<Self> {
+        Self::ALL.get(index).copied()
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -372,7 +386,7 @@ fn shot(
     actor: &mut Combatant,
     body: Rect,
     id: ActorId,
-    target: (ActorId, Rect),
+    targets: &[(ActorId, Rect)],
     arena: &Arena,
 ) -> Shot {
     actor.spend_shot();
@@ -383,7 +397,7 @@ fn shot(
         actor.selected.tuning().range,
         id,
         arena.solids,
-        &[target],
+        targets,
     );
     Shot {
         shooter: id,
@@ -441,33 +455,91 @@ impl Actor {
         }
     }
 }
+/// Existing floor and platform tops; terrain is unchanged. Top-left body coordinates.
+pub const SPAWN_CANDIDATES: [Vec2; MAX_PLAYERS] = [
+    PRACTICE_ARENA.spawn,
+    BOT_SPAWN,
+    Vec2 { x: 90., y: 1152. },
+    Vec2 { x: 2240., y: 1152. },
+    Vec2 { x: 210., y: 892. },
+    Vec2 { x: 700., y: 687. },
+    Vec2 { x: 1300., y: 887. },
+    Vec2 { x: 1900., y: 602. },
+];
 fn spawn_arena(id: ActorId, arena: &Arena) -> Arena {
     Arena {
-        spawn: if id == ActorId::One {
+        spawn: if id.index() == 0 {
             arena.spawn
         } else {
-            BOT_SPAWN
+            SPAWN_CANDIDATES[id.index()]
         },
         ..*arena
     }
 }
+fn overlaps(a: Rect, b: Rect) -> bool {
+    a.x < b.x + b.width - EPS
+        && a.x + a.width > b.x + EPS
+        && a.y < b.y + b.height - EPS
+        && a.y + a.height > b.y + EPS
+}
+pub fn valid_spawn(point: Vec2, arena: &Arena) -> bool {
+    let body = Rect::new(point.x, point.y, BODY_WIDTH, BODY_HEIGHT);
+    point.x.is_finite()
+        && point.y.is_finite()
+        && point.x >= 0.
+        && point.y >= 0.
+        && point.x + BODY_WIDTH <= arena.width
+        && point.y + BODY_HEIGHT <= arena.height
+        && !arena.solids.iter().any(|&solid| overlaps(body, solid))
+        && crate::collision::supported(&body, arena.solids)
+}
+/// Prefer clear candidates, then maximize nearest living distance. Stable candidate
+/// order breaks ties. All-contested fallback can overlap: there is no immunity.
+pub fn select_spawn(state: &MatchState, id: ActorId, arena: &Arena) -> Vec2 {
+    let mut best: Option<(Vec2, bool, f64)> = None;
+    for point in SPAWN_CANDIDATES {
+        if !valid_spawn(point, arena) {
+            continue;
+        }
+        let body = Rect::new(point.x, point.y, BODY_WIDTH, BODY_HEIGHT);
+        let mut clear = true;
+        let mut distance = f64::INFINITY;
+        for actor in state
+            .actors
+            .iter()
+            .flatten()
+            .filter(|a| a.id != id && a.combat.alive())
+        {
+            clear &= !overlaps(body, actor.movement.body);
+            distance = distance
+                .min((point.x - actor.movement.body.x).hypot(point.y - actor.movement.body.y));
+        }
+        if best.is_none_or(|(_, old_clear, old_distance)| {
+            (clear && !old_clear) || (clear == old_clear && distance > old_distance)
+        }) {
+            best = Some((point, clear, distance));
+        }
+    }
+    best.map_or(arena.spawn, |(point, _, _)| point)
+}
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MatchState {
     pub tick: u64,
-    pub actors: [Option<Actor>; 2],
+    pub actors: [Option<Actor>; MAX_PLAYERS],
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MatchEvents {
-    pub movement: [StepEvents; 2],
-    pub shots: [Option<Shot>; 2],
-    pub respawned: [bool; 2],
-    pub died: [bool; 2],
+    pub movement: [StepEvents; MAX_PLAYERS],
+    pub shots: [Option<Shot>; MAX_PLAYERS],
+    pub respawned: [bool; MAX_PLAYERS],
+    pub died: [bool; MAX_PLAYERS],
 }
 /// One 60 Hz tick: life transitions, all movement, all shot decisions, then damage.
-/// Neither actor gets a first-in-loop advantage. Online reset flags are ignored.
+/// Return fire is simultaneous; shooter-ID order breaks lethal-credit ties.
+/// Online reset flags are ignored.
 pub fn step_match(
     state: &mut MatchState,
-    inputs: [InputCommand; 2],
+    inputs: [InputCommand; MAX_PLAYERS],
     arena: &Arena,
 ) -> Result<MatchEvents, TickMismatch> {
     step_actors(state, inputs, arena, None)
@@ -499,7 +571,7 @@ pub fn predict_movement(actor: &mut Actor, mut input: InputCommand, arena: &Aren
 }
 fn step_actors(
     state: &mut MatchState,
-    mut inputs: [InputCommand; 2],
+    mut inputs: [InputCommand; MAX_PLAYERS],
     arena: &Arena,
     mut bot_timer: Option<&mut u16>,
 ) -> Result<MatchEvents, TickMismatch> {
@@ -514,11 +586,16 @@ fn step_actors(
     let mut events = MatchEvents::default();
     for id in ActorId::ALL {
         let i = id.index();
+        let spawn = if bot_timer.is_some() {
+            spawn_arena(id, arena).spawn
+        } else {
+            select_spawn(state, id, arena)
+        };
         if let Some(actor) = &mut state.actors[i] {
             let bot = i == 1 && bot_timer.is_some();
             events.respawned[i] = actor.combat.advance_life(bot);
             if events.respawned[i] {
-                actor.movement = Player::spawn(&spawn_arena(id, arena));
+                actor.movement = Player::spawn(&Arena { spawn, ..*arena });
                 actor.require_neutral = true;
             }
             inputs[i].reset = false;
@@ -551,10 +628,10 @@ fn step_actors(
     {
         *timer = BOT_GRACE_TICKS;
     }
-    let mut shoots = [false; 2];
+    let mut shoots = [false; MAX_PLAYERS];
     for id in ActorId::ALL {
         let i = id.index();
-        let target = state.actors[id.other().index()];
+        let target = state.actors[0]; // Only the offline bot consumes this target.
         let Some(actor) = &mut state.actors[i] else {
             continue;
         };
@@ -609,19 +686,23 @@ fn step_actors(
         }
     }
     // Snapshot target bodies before damage; dead/absent targets cannot absorb rays.
+    let mut bodies = [(ActorId::One, Rect::new(0., 0., 0., 0.)); MAX_PLAYERS];
+    let mut count = 0;
+    for actor in state.actors.iter().flatten().filter(|a| a.combat.alive()) {
+        bodies[count] = (actor.id, actor.movement.body);
+        count += 1;
+    }
     for id in ActorId::ALL {
         let i = id.index();
         if !shoots[i] {
             continue;
         }
-        let target = state.actors[id.other().index()].filter(|a| a.combat.alive());
         let actor = state.actors[i].as_mut().expect("shooter exists");
-        let target = target.map_or((id, actor.movement.body), |a| (a.id, a.movement.body));
         events.shots[i] = Some(shot(
             &mut actor.combat,
             actor.movement.body,
             id,
-            target,
+            &bodies[..count],
             arena,
         ));
     }
@@ -632,7 +713,7 @@ fn step_actors(
                 .expect("ray target exists");
             shot.damage = shot.damage.min(victim.combat.health);
             victim.combat.damage(shot.damage);
-            if !victim.combat.alive() {
+            if !victim.combat.alive() && !events.died[id.index()] {
                 events.died[id.index()] = true;
                 victim.deaths += 1;
                 victim.require_neutral = true;
@@ -689,17 +770,26 @@ pub fn step_practice(
                 deaths: combat.deaths,
             }),
             Some(bot),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ],
     };
     let result = step_actors(
         &mut state,
-        [
-            input,
-            InputCommand {
-                tick: world.tick,
-                ..Default::default()
-            },
-        ],
+        std::array::from_fn(|i| {
+            if i == 0 {
+                input
+            } else {
+                InputCommand {
+                    tick: world.tick,
+                    ..Default::default()
+                }
+            }
+        }),
         arena,
         Some(&mut combat.bot_attack_ticks),
     )?;
@@ -714,7 +804,7 @@ pub fn step_practice(
     combat.deaths = player.deaths;
     Ok(CombatEvents {
         movement: result.movement[0],
-        shots: result.shots,
+        shots: [result.shots[0], result.shots[1]],
         player_respawned: result.respawned[0],
         bot_respawned: result.respawned[1],
         player_died: result.died[0],

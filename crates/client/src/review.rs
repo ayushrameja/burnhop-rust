@@ -13,6 +13,7 @@ pub struct Capture {
     seen: std::collections::BTreeSet<&'static str>,
     manual: u8,
     last_size: Vec2,
+    frames: u64,
 }
 pub fn capture(
     mut commands: Commands,
@@ -31,10 +32,11 @@ pub fn capture(
             state.directory = None;
         }
     }
+    state.frames += 1;
     let Some(dir) = state.directory.clone() else {
         return;
     };
-    if game.world.tick < 10 {
+    if game.world.tick < 10 || state.frames < 60 {
         return;
     }
     let p = game.world.player;
@@ -45,6 +47,52 @@ pub fn capture(
         "practice"
     };
     let candidates = [
+        (
+            "scoreboard",
+            game.online.is_some()
+                && (keys.pressed(KeyCode::Tab) || std::env::var_os("BURNHOP_REVIEW_TAB").is_some()),
+        ),
+        (
+            "remote-jets",
+            game.online.as_ref().is_some_and(|o| {
+                o.actors
+                    .iter()
+                    .flatten()
+                    .filter(|a| a.movement.thrusting)
+                    .count()
+                    >= 5
+            }),
+        ),
+        (
+            "eight-players",
+            game.online
+                .as_ref()
+                .is_some_and(|o| o.actors.iter().flatten().count() == 8),
+        ),
+        (
+            "departure",
+            state.seen.contains("eight-players")
+                && game
+                    .online
+                    .as_ref()
+                    .is_some_and(|o| o.actors.iter().flatten().count() == 7),
+        ),
+        (
+            "replacement",
+            game.online
+                .as_ref()
+                .is_some_and(|o| o.actors.iter().flatten().any(|a| a.generation > 8)),
+        ),
+        (
+            "replacement-visible",
+            game.online.as_ref().is_some_and(|o| {
+                o.actors.iter().flatten().any(|a| {
+                    a.generation > 8
+                        && (a.movement.body.x - p.body.x).abs() < 500.
+                        && (a.movement.body.y - p.body.y).abs() < 100.
+                })
+            }),
+        ),
         ("spawn", c.alive() && game.world.tick < 120),
         (
             "moving",
@@ -70,12 +118,12 @@ pub fn capture(
         (
             "pistol-fire",
             game.feedback
-                .has_shot(burnhop_gameplay_core::WeaponId::Pistol),
+                .has_shot(game.local_id(), burnhop_gameplay_core::WeaponId::Pistol),
         ),
         (
             "rifle-fire",
             game.feedback
-                .has_shot(burnhop_gameplay_core::WeaponId::M416),
+                .has_shot(game.local_id(), burnhop_gameplay_core::WeaponId::M416),
         ),
         (
             "disconnected",

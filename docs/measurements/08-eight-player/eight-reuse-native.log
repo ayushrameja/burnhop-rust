@@ -1,0 +1,11 @@
+ONLINE assigned actor=One generation=1 start_tick=12
+ONLINE CONNECTED - Player 1
+VISUAL viewport=1280x720 scale=2
+VISUAL capture=scoreboard tick=34 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=eight-players tick=34 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=spawn tick=34 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+ONLINE focus lost: input released; server continues
+VISUAL capture=remote-jets tick=740 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=departure tick=1328 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=replacement tick=1510 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=replacement-visible tick=1780 actor=Some(One) local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive

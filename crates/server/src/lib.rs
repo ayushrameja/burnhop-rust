@@ -1,4 +1,4 @@
-//! Headless two-player authoritative server; the binary only owns the wall clock.
+//! Headless eight-player authoritative server; the binary only owns the wall clock.
 use burnhop_gameplay_core::*;
 use burnhop_protocol::{
     transport::{config, now},
@@ -25,8 +25,14 @@ pub struct Server {
     transport: NetcodeServerTransport,
     peers: BTreeMap<u64, Peer>,
     generation: u64,
-    shots: [Option<ConfirmedShot>; 2],
+    flush_age: f64,
+    shots: [Option<ConfirmedShot>; MAX_PLAYERS],
     pub diagnostics: bool,
+    pub tick_work_us: diagnostics::Samples,
+    pub application_sent: u64,
+    pub application_received: u64,
+    pub snapshot_max: usize,
+    pub retired_inputs: InputStats,
 }
 impl Server {
     pub fn bind(address: SocketAddr) -> Result<Self, String> {
@@ -35,7 +41,7 @@ impl Server {
         let transport = NetcodeServerTransport::new(
             ServerConfig {
                 current_time: now(),
-                max_clients: 4,
+                max_clients: MAX_PLAYERS + 2,
                 protocol_id: TRANSPORT_ID,
                 public_addresses: vec![actual],
                 authentication: ServerAuthentication::Unsecure,
@@ -49,8 +55,14 @@ impl Server {
             transport,
             peers: BTreeMap::new(),
             generation: 0,
-            shots: [None; 2],
+            flush_age: 0.,
+            shots: [None; MAX_PLAYERS],
             diagnostics: false,
+            tick_work_us: Default::default(),
+            application_sent: 0,
+            application_received: 0,
+            snapshot_max: 0,
+            retired_inputs: Default::default(),
         })
     }
     pub fn address(&self) -> SocketAddr {
@@ -64,7 +76,14 @@ impl Server {
             && let Some(queue) = peer.queue.take()
         {
             self.state.actors[queue.actor.index()] = None;
-            self.shots[queue.actor.index()] = None;
+            for shot in &mut self.shots {
+                if shot.is_some_and(|s| {
+                    s.shot.shooter == queue.actor || s.shot.impact == Impact::Body(queue.actor)
+                }) {
+                    *shot = None;
+                }
+            }
+            accumulate(&mut self.retired_inputs, queue.stats);
             if self.diagnostics {
                 println!(
                     "SERVER leave actor={:?} tick={}",
@@ -85,6 +104,7 @@ impl Server {
     }
     /// Transport clocks use actual elapsed time, including dropped overload time.
     pub fn poll(&mut self, elapsed: Duration) -> Result<(), String> {
+        self.flush_age += elapsed.as_secs_f64();
         self.connection.update(elapsed);
         self.transport
             .update(elapsed, &mut self.connection)
@@ -136,6 +156,7 @@ impl Server {
                     let Some(bytes) = self.connection.receive_message(client, channel) else {
                         break;
                     };
+                    self.application_received += bytes.len() as u64;
                     let peer = self.peers.get_mut(&client).expect("registered peer");
                     peer.messages -= 1.;
                     if count == 16 || peer.messages < 0. {
@@ -180,8 +201,14 @@ impl Server {
                     generation: self.generation,
                     start_tick: self.state.tick + INPUT_LEAD,
                 };
-                self.state.actors[id.index()] =
-                    Some(Actor::new(id, self.generation, &PRACTICE_ARENA));
+                let spawn = select_spawn(&self.state, id, &PRACTICE_ARENA);
+                let mut actor = Actor::new(id, self.generation, &PRACTICE_ARENA);
+                actor.movement = World::new(&Arena {
+                    spawn,
+                    ..PRACTICE_ARENA
+                })
+                .player;
+                self.state.actors[id.index()] = Some(actor);
                 self.peers.get_mut(&client).unwrap().queue =
                     Some(InputQueue::new(id, welcome.start_tick));
                 self.connection
@@ -233,11 +260,12 @@ impl Server {
         }
     }
     pub fn tick(&mut self) -> MatchEvents {
+        let began = std::time::Instant::now();
         let mut inputs = [InputCommand {
             tick: self.state.tick,
             release_input: true,
             ..Default::default()
-        }; 2];
+        }; MAX_PLAYERS];
         for peer in self.peers.values_mut() {
             if let Some(queue) = &mut peer.queue {
                 inputs[queue.actor.index()] = queue.take_tick(self.state.tick);
@@ -259,26 +287,42 @@ impl Server {
                 self.state.actors.map(|a| a.map(|a| a.combat.health))
             );
         }
+        self.tick_work_us.add(began.elapsed().as_secs_f64() * 1e6);
         events
     }
     /// 30 Hz snapshots (binary calls this every second simulation tick).
     pub fn snapshot(&mut self) {
         for (&client, peer) in &self.peers {
             if let Some(queue) = &peer.queue {
-                self.connection.send_message(
-                    client,
-                    STATE,
-                    encode(&Message::Snapshot(Snapshot {
-                        state: self.state,
-                        ack: queue.ack,
-                        last_applied: queue.last_applied,
-                        shots: self.shots,
-                    })),
-                );
+                let bytes = encode(&Message::Snapshot(Snapshot {
+                    state: self.state,
+                    ack: queue.ack,
+                    last_applied: queue.last_applied,
+                    shots: self.shots,
+                }));
+                self.snapshot_max = self.snapshot_max.max(bytes.len());
+                self.application_sent += bytes.len() as u64;
+                self.connection.send_message(client, STATE, bytes);
             }
         }
     }
+    pub fn input_stats(&self) -> InputStats {
+        let mut sum = self.retired_inputs;
+        for peer in self.peers.values() {
+            if let Some(queue) = &peer.queue {
+                accumulate(&mut sum, queue.stats);
+            }
+        }
+        sum
+    }
+    pub fn queue_peak(&self) -> usize {
+        self.input_stats().peak
+    }
     pub fn flush(&mut self) {
+        if self.flush_age < DT {
+            return;
+        }
+        self.flush_age %= DT;
         self.transport.send_packets(&mut self.connection);
     }
 }
@@ -309,3 +353,14 @@ impl ServerClock {
         steps
     }
 }
+
+fn accumulate(sum: &mut InputStats, value: InputStats) {
+    sum.accepted += value.accepted;
+    sum.applied += value.applied;
+    sum.missing += value.missing;
+    sum.late += value.late;
+    sum.duplicates += value.duplicates;
+    sum.peak = sum.peak.max(value.peak);
+}
+
+pub mod reliability;

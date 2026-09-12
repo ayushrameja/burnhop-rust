@@ -1,0 +1,40 @@
+RELIABILITY memory_rss_kib=Some(4928)
+RELIABILITY progress seconds=5.0 players=8 kills=7 respawns=2 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5120)
+RELIABILITY progress seconds=35.0 players=8 kills=53 respawns=48 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5280)
+RELIABILITY progress seconds=65.0 players=8 kills=96 respawns=91 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5632)
+RELIABILITY progress seconds=95.0 players=8 kills=143 respawns=137 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5632)
+RELIABILITY progress seconds=125.0 players=8 kills=190 respawns=186 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5648)
+RELIABILITY progress seconds=155.0 players=8 kills=234 respawns=230 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5648)
+RELIABILITY progress seconds=185.0 players=8 kills=278 respawns=273 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5680)
+RELIABILITY progress seconds=215.0 players=8 kills=324 respawns=318 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5696)
+RELIABILITY progress seconds=245.0 players=8 kills=370 respawns=363 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5808)
+RELIABILITY progress seconds=275.0 players=8 kills=413 respawns=409 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5808)
+RELIABILITY progress seconds=305.0 players=8 kills=462 respawns=457 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5936)
+RELIABILITY progress seconds=335.0 players=8 kills=510 respawns=503 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5936)
+RELIABILITY progress seconds=365.0 players=8 kills=554 respawns=546 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(5936)
+RELIABILITY progress seconds=395.0 players=8 kills=600 respawns=594 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4736)
+RELIABILITY progress seconds=425.0 players=8 kills=647 respawns=638 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4864)
+RELIABILITY progress seconds=455.0 players=8 kills=692 respawns=686 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4864)
+RELIABILITY progress seconds=485.0 players=8 kills=737 respawns=731 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4864)
+RELIABILITY progress seconds=515.0 players=8 kills=783 respawns=776 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4944)
+RELIABILITY progress seconds=545.0 players=8 kills=827 respawns=819 dropped=0 queue_peak=8
+RELIABILITY memory_rss_kib=Some(4944)
+RELIABILITY progress seconds=575.0 players=8 kills=871 respawns=862 dropped=0 queue_peak=8

@@ -7,15 +7,23 @@ pub struct Prediction {
     pub local: Option<Actor>,
     pub latest: Option<Snapshot>,
     pub next_sequence: u64,
+    pub corrections: super::diagnostics::Samples,
+    pub history_peak: usize,
+    pub target_lead: u64,
+    pub rescheduled_slots: u64,
+    snapshot_age: f64,
+    lower_lead_age: f64,
+    network_timing: bool,
     history: VecDeque<NetInput>,
     snapshots: VecDeque<Snapshot>,
-    shown_shots: [Option<u64>; 2],
+    shown_shots: [Option<(u64, u64)>; MAX_PLAYERS],
 }
 #[derive(Default, Debug)]
 pub struct ReconcileResult {
     pub accepted: bool,
     pub life_changed: bool,
     pub shots: Vec<Shot>,
+    pub changed: [bool; MAX_PLAYERS],
 }
 impl Prediction {
     pub fn new(welcome: Welcome) -> Self {
@@ -24,9 +32,40 @@ impl Prediction {
             local: None,
             latest: None,
             next_sequence: 1,
+            corrections: Default::default(),
+            history_peak: 0,
+            target_lead: INPUT_LEAD,
+            rescheduled_slots: 0,
+            snapshot_age: 0.,
+            lower_lead_age: 0.,
+            network_timing: false,
             history: VecDeque::new(),
             snapshots: VecDeque::new(),
-            shown_shots: [None; 2],
+            shown_shots: [None; MAX_PLAYERS],
+        }
+    }
+    /// RTT includes both directions. The received snapshot clock is already one
+    /// direction old; reserve RTT plus four ticks for jitter/send cadence. No
+    /// wall-clock synchronization is required. Grow promptly, reduce one tick per
+    /// ten stable seconds. Sequence gaps are neutral, never simulated in a burst.
+    pub fn observe_timing(&mut self, rtt: f64, elapsed: f64) {
+        if !rtt.is_finite() || !elapsed.is_finite() || rtt < 0. || elapsed < 0. {
+            return;
+        }
+        self.network_timing = true;
+        self.snapshot_age = (self.snapshot_age + elapsed).min(1.);
+        let desired = ((rtt * 60.).ceil() as u64)
+            .saturating_add(4)
+            .clamp(INPUT_LEAD, 24);
+        if desired >= self.target_lead {
+            self.target_lead = desired;
+            self.lower_lead_age = 0.;
+        } else {
+            self.lower_lead_age += elapsed;
+            if self.lower_lead_age >= 10. {
+                self.target_lead -= 1;
+                self.lower_lead_age = 0.;
+            }
         }
     }
     pub fn history_len(&self) -> usize {
@@ -56,6 +95,15 @@ impl Prediction {
         if !valid_input(&input) {
             return None;
         }
+        if self.network_timing
+            && let Some(latest) = self.latest
+        {
+            let ceiling =
+                latest.ack + self.target_lead + (self.snapshot_age * 60.).floor() as u64 + 2;
+            if self.next_sequence > ceiling {
+                return None;
+            }
+        }
         // Avoid predicting beyond the server's documented acceptance window.
         let tick = self
             .welcome
@@ -68,6 +116,7 @@ impl Prediction {
         }
         predict_movement(actor, command, &PRACTICE_ARENA);
         self.history.push_back(input);
+        self.history_peak = self.history_peak.max(self.history.len());
         self.next_sequence += 1;
         let mut bundle = [None; 3];
         for (slot, input) in bundle.iter_mut().zip(self.history.iter().rev()) {
@@ -101,10 +150,21 @@ impl Prediction {
             self.history.clear();
         }
         self.history.retain(|input| input.sequence > snapshot.ack);
-        // After a stall/lost startup messages, reserve six future slots again.
-        // Omitted sequence slots are neutral, never simulated faster to catch up.
-        if snapshot.ack > 0 && self.next_sequence <= snapshot.ack + 1 {
-            self.next_sequence = snapshot.ack + INPUT_LEAD;
+        self.snapshot_age = 0.;
+        let reserve = if self.network_timing {
+            self.target_lead
+        } else {
+            INPUT_LEAD
+        };
+        let behind = if self.network_timing {
+            self.next_sequence + 2 < snapshot.ack + reserve
+        } else {
+            snapshot.ack > 0 && self.next_sequence <= snapshot.ack + 1
+        };
+        if behind {
+            let next = snapshot.ack + reserve;
+            self.rescheduled_slots += next.saturating_sub(self.next_sequence);
+            self.next_sequence = next;
         }
         let end = self
             .history
@@ -126,15 +186,32 @@ impl Prediction {
             }
         }
         for (i, confirmed) in snapshot.shots.iter().enumerate() {
+            let generation = snapshot.state.actors[i].map(|a| a.generation);
+            if self.latest.is_some_and(|old| {
+                old.state.actors[i].map(|a| (a.generation, a.deaths, a.combat.alive()))
+                    != snapshot.state.actors[i].map(|a| (a.generation, a.deaths, a.combat.alive()))
+            }) {
+                result.changed[i] = true;
+            }
             if let Some(confirmed) = confirmed
-                && self.shown_shots[i].is_none_or(|old| confirmed.tick > old)
+                && let Some(generation) = generation
+                && self.shown_shots[i]
+                    .is_none_or(|(g, old)| g != generation || confirmed.tick > old)
             {
-                self.shown_shots[i] = Some(confirmed.tick);
+                self.shown_shots[i] = Some((generation, confirmed.tick));
                 if self.latest.is_some() && snapshot.state.tick.saturating_sub(confirmed.tick) <= 12
                 {
                     result.shots.push(confirmed.shot);
                 }
             }
+        }
+        if let Some(previous) = self.local
+            && !result.life_changed
+        {
+            self.corrections.add(
+                (previous.movement.body.x - actor.movement.body.x)
+                    .hypot(previous.movement.body.y - actor.movement.body.y),
+            );
         }
         self.local = Some(actor);
         self.latest = Some(snapshot);
@@ -147,11 +224,14 @@ impl Prediction {
     }
     /// Delayed remote presentation, no extrapolation through loss or lifecycle.
     /// Call with estimated server tick minus six ticks (100 ms).
-    pub fn remote_at(&self, tick: f64) -> Option<Actor> {
+    pub fn remote_at(&self, id: ActorId, tick: f64) -> Option<Actor> {
         if !tick.is_finite() {
             return None;
         }
-        let i = self.welcome.actor.other().index();
+        let i = id.index();
+        if id == self.welcome.actor {
+            return None;
+        }
         // Departures and new joins take effect immediately; never resurrect an old slot.
         let latest = self.latest?.state.actors[i]?;
         let first = self

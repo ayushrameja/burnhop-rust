@@ -315,19 +315,18 @@ pub fn present(
         text.0 = match field {
             Field::Title => "BURNHOP".into(),
             Field::Mode => if game.online.is_some() {
-                "DIRECT CONNECT / 01"
+                "DIRECT CONNECT"
             } else {
                 "FIELD RANGE / PRACTICE"
             }
             .into(),
             Field::Connection => {
                 if let Some(o) = &game.online {
-                    let opponent = if !o.remote_present {
-                        "Waiting for opponent".into()
-                    } else if !game.combat.bot.alive() {
-                        "Opponent respawning".into()
+                    let count = o.actors.iter().flatten().count();
+                    let opponent = if count < 2 {
+                        "Waiting for players / Tab".into()
                     } else {
-                        format!("Opponent {} HP", game.combat.bot.health)
+                        format!("{count}/8 players / Tab scores")
                     };
                     if compact {
                         if o.network.status.terminal() {

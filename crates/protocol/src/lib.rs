@@ -6,16 +6,18 @@ use burnhop_gameplay_core::*;
 pub use codec::{decode, encode};
 use std::collections::BTreeMap;
 
-pub const PROTOCOL_VERSION: u16 = 1;
+pub const PROTOCOL_VERSION: u16 = 2;
 /// Bump whenever arena, tuning, ordering or required snapshot state changes.
-pub const GAMEPLAY_VERSION: u64 = 0x4255_524e_0004_0001;
+pub const GAMEPLAY_VERSION: u64 = 0x4255_524e_0008_0001;
 /// Stable envelope ID allows application compatibility errors to be displayed.
 pub const TRANSPORT_ID: u64 = 0x4255_524e_484f_5001;
-pub const MAX_MESSAGE_BYTES: usize = 1024;
+pub const MAX_MESSAGE_BYTES: usize = 1200;
+pub const MAX_SNAPSHOT_BYTES: usize = 1185;
 pub const INPUT_LEAD: u64 = 6;
 pub const INPUT_WINDOW: u64 = 32;
 pub const HISTORY_LIMIT: usize = 128;
 pub const SNAPSHOT_LIMIT: usize = 32;
+pub mod diagnostics;
 pub const CONTROL: u8 = 0;
 pub const STATE: u8 = 1;
 
@@ -44,7 +46,7 @@ pub struct Snapshot {
     /// All slots through ack are retired, including missing commands.
     pub ack: u64,
     pub last_applied: u64,
-    pub shots: [Option<ConfirmedShot>; 2],
+    pub shots: [Option<ConfirmedShot>; MAX_PLAYERS],
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Rejection {
@@ -55,7 +57,7 @@ pub enum Rejection {
     Timeout,
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[allow(clippy::large_enum_variant)] // Fixed <1 KiB stack value avoids peer-driven allocations.
+#[allow(clippy::large_enum_variant)] // Fixed <2 KiB stack value avoids peer-driven allocations.
 pub enum Message {
     Hello {
         protocol: u16,
@@ -108,6 +110,7 @@ pub struct InputQueue {
     pub start_tick: u64,
     pub ack: u64,
     pub last_applied: u64,
+    pub stats: InputStats,
     retired_by_release: u64,
     commands: BTreeMap<u64, InputCommand>,
     tokens: f64,
@@ -119,6 +122,7 @@ impl InputQueue {
             start_tick,
             ack: 0,
             last_applied: 0,
+            stats: InputStats::default(),
             retired_by_release: 0,
             commands: BTreeMap::new(),
             tokens: 12.0,
@@ -144,9 +148,12 @@ impl InputQueue {
             return Admission::Invalid;
         }
         let retired = server_tick.saturating_sub(self.start_tick);
-        if input.sequence <= self.ack.max(retired).max(self.retired_by_release)
-            || self.commands.contains_key(&input.sequence)
-        {
+        if input.sequence <= self.ack.max(retired).max(self.retired_by_release) {
+            self.stats.late += 1;
+            return Admission::DuplicateOrStale;
+        }
+        if self.commands.contains_key(&input.sequence) {
+            self.stats.duplicates += 1;
             return Admission::DuplicateOrStale;
         }
         let Some(tick) = self.start_tick.checked_add(input.sequence - 1) else {
@@ -160,6 +167,8 @@ impl InputQueue {
         }
         self.tokens -= 1.0;
         self.commands.insert(input.sequence, input.command);
+        self.stats.accepted += 1;
+        self.stats.peak = self.stats.peak.max(self.commands.len());
         Admission::Accepted
     }
     pub fn release(&mut self, through: u64, server_tick: u64) -> bool {
@@ -187,9 +196,23 @@ impl InputQueue {
             if let Some(input) = self.commands.remove(&self.ack) {
                 command = InputCommand { tick, ..input };
                 self.last_applied = self.ack;
+                self.stats.applied += 1;
+            } else {
+                self.stats.missing += 1;
             }
             self.commands.retain(|seq, _| *seq > self.ack);
         }
         command
     }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct InputStats {
+    pub accepted: u64,
+    pub applied: u64,
+    pub missing: u64,
+    /// Includes stale redundant copies; not a count of lost unique actions.
+    pub late: u64,
+    pub duplicates: u64,
+    pub peak: usize,
 }

@@ -33,40 +33,55 @@ struct ActorView {
     combat: Combatant,
     present: bool,
     generation: u64,
+    deaths: u32,
 }
-fn actors(game: &Playground) -> [ActorView; 2] {
-    let mut local = game.world.player;
-    local.body.x = game.previous.body.x + (local.body.x - game.previous.body.x) * game.alpha;
-    local.body.y = game.previous.body.y + (local.body.y - game.previous.body.y) * game.alpha;
-    let mut remote = game.world.player;
-    remote.body = game.combat.bot_body;
-    remote.velocity = core::Vec2::default();
-    remote.grounded = true;
-    remote.thrusting = false;
-    let mut generation = 0;
+fn actors(game: &Playground) -> [ActorView; core::MAX_PLAYERS] {
+    let mut views = [ActorView {
+        movement: game.world.player,
+        combat: game.combat.player,
+        present: false,
+        generation: 0,
+        deaths: 0,
+    }; core::MAX_PLAYERS];
     if let Some(online) = &game.online {
-        if let Some(p) = online.remote_movement {
-            remote = p;
+        if !online.network.status.terminal() {
+            for (i, actor) in online.actors.iter().enumerate() {
+                if let Some(a) = actor {
+                    views[i] = ActorView {
+                        movement: a.movement,
+                        combat: a.combat,
+                        present: true,
+                        generation: a.generation,
+                        deaths: a.deaths,
+                    };
+                }
+            }
         }
-        generation = online.remote_generation;
-    }
-    [
-        ActorView {
+    } else {
+        let mut local = game.world.player;
+        local.body.x = game.previous.body.x + (local.body.x - game.previous.body.x) * game.alpha;
+        local.body.y = game.previous.body.y + (local.body.y - game.previous.body.y) * game.alpha;
+        views[0] = ActorView {
             movement: local,
             combat: game.combat.player,
-            present: game.online.as_ref().is_none_or(|o| {
-                o.prediction.as_ref().is_some_and(|p| p.local.is_some())
-                    && !o.network.status.terminal()
-            }),
+            present: true,
             generation: 0,
-        },
-        ActorView {
-            movement: remote,
+            deaths: game.combat.deaths,
+        };
+        let mut bot = local;
+        bot.body = game.combat.bot_body;
+        bot.velocity = core::Vec2::default();
+        bot.grounded = true;
+        bot.thrusting = false;
+        views[1] = ActorView {
+            movement: bot,
             combat: game.combat.bot,
-            present: game.online.as_ref().is_none_or(|o| o.remote_present),
-            generation,
-        },
-    ]
+            present: true,
+            generation: 0,
+            deaths: game.combat.kills,
+        };
+    }
+    views
 }
 #[derive(Clone, Copy)]
 enum Part {
@@ -137,6 +152,7 @@ struct Animator {
     alive: bool,
     present: bool,
     generation: u64,
+    deaths: u32,
     epoch: u64,
 }
 impl Animator {
@@ -145,6 +161,7 @@ impl Animator {
         let changed = self.present != view.present
             || self.alive != view.combat.alive()
             || self.generation != view.generation
+            || self.deaths != view.deaths
             || self.epoch != epoch
             || self.last.is_some_and(|last| last.distance(pos) > 80.);
         if changed {
@@ -152,6 +169,7 @@ impl Animator {
                 alive: view.combat.alive(),
                 present: view.present,
                 generation: view.generation,
+                deaths: view.deaths,
                 epoch,
                 ..default()
             };
@@ -170,7 +188,7 @@ impl Animator {
     }
 }
 #[derive(Resource, Default)]
-pub struct Animation([Animator; 2]);
+pub struct Animation([Animator; core::MAX_PLAYERS]);
 #[derive(Clone, Copy)]
 struct Draw {
     at: Vec2,
@@ -236,7 +254,7 @@ pub fn setup(
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let art = crate::artwork::create(&mut images, &mut layouts);
-    for actor in 0..2 {
+    for actor in 0..core::MAX_PLAYERS {
         for part in PARTS {
             commands.spawn((
                 PilotPart { actor, part },
@@ -451,11 +469,7 @@ pub fn present(
     for (i, view) in views.iter().enumerate() {
         let anim = &mut animation.0[i];
         if anim.advance(*view, game.feedback.epoch, dt) {
-            game.feedback.clear_actor(if i == 0 {
-                core::ActorId::One
-            } else {
-                core::ActorId::Two
-            });
+            game.feedback.clear_actor(core::ActorId::ALL[i]);
         }
     }
     for (part, mut sprite, mut t, mut visible) in &mut parts {
@@ -475,7 +489,11 @@ pub fn present(
         t.translation = (base + d.at).extend(d.z);
         t.rotation = Quat::from_rotation_z(d.angle);
         t.scale = d.scale.extend(1.);
-        let accent = if part.actor == 0 { CYAN } else { OCHRE };
+        let accent = if part.actor == game.local_id().index() {
+            CYAN
+        } else {
+            OCHRE
+        };
         if matches!(part.part, Part::Badge | Part::Marker) {
             sprite.color = color(accent);
         }
@@ -563,14 +581,17 @@ pub fn present(
     }
     for (label, mut text, mut t, mut visible) in &mut labels {
         let v = views[label.0];
-        text.0 = if label.0 == 0 {
-            "YOU"
+        text.0 = if label.0 == game.local_id().index() {
+            if game.online.is_some() {
+                format!("YOU / P{}", label.0 + 1)
+            } else {
+                "YOU".into()
+            }
         } else if game.online.is_some() {
-            "RIVAL"
+            format!("P{}", label.0 + 1)
         } else {
-            "BOT"
-        }
-        .into();
+            "BOT".into()
+        };
         t.translation = Vec3::new(
             (v.movement.body.x + 18.) as f32,
             -v.movement.body.y as f32 + 16.,
@@ -587,6 +608,25 @@ pub fn present(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_skipped_death_cycle_still_resets_pose_in_every_slot() {
+        let mut animation = Animation::default();
+        for id in core::ActorId::ALL {
+            let mut view = ActorView {
+                movement: core::World::new(&core::PRACTICE_ARENA).player,
+                combat: Combatant::new(false),
+                present: true,
+                generation: 4,
+                deaths: 0,
+            };
+            let animator = &mut animation.0[id.index()];
+            animator.advance(view, 0, 0.016);
+            animator.phase = 0.8;
+            view.deaths = 1;
+            assert!(animator.advance(view, 0, 0.016));
+            assert_eq!(animator.phase, 0.);
+        }
+    }
     #[test]
     fn state_priority_respects_life_support_and_thrust() {
         let mut p = core::World::new(&core::PRACTICE_ARENA).player;
@@ -633,6 +673,7 @@ mod tests {
             combat: Combatant::new(false),
             present: true,
             generation: 1,
+            deaths: 0,
         };
         assert!(a.advance(view, 0, 0.01));
         view.movement.velocity.x = 200.;
@@ -659,6 +700,7 @@ mod tests {
             combat: Combatant::new(false),
             present: true,
             generation: 1,
+            deaths: 0,
         };
         for weapon in [WeaponId::Pistol, WeaponId::M416] {
             view.combat.selected = weapon;

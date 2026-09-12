@@ -7,9 +7,7 @@ use std::{net::SocketAddr, time::Duration};
 pub struct Online {
     pub network: NetworkClient,
     pub prediction: Option<Prediction>,
-    pub remote_present: bool,
-    pub remote_movement: Option<Player>,
-    pub remote_generation: u64,
+    pub actors: [Option<Actor>; MAX_PLAYERS],
     snapshot_age: f64,
     was_focused: bool,
     script: Option<NativeRoute>,
@@ -20,9 +18,7 @@ impl Online {
         Ok(Self {
             network: NetworkClient::connect(address, bytes)?,
             prediction: None,
-            remote_present: false,
-            remote_movement: None,
-            remote_generation: 0,
+            actors: [None; MAX_PLAYERS],
             snapshot_age: 0.,
             was_focused: true,
             script: script.then(NativeRoute::default),
@@ -56,15 +52,6 @@ fn renet_id() -> u64 {
         .as_nanos();
     (time as u64) ^ (u64::from(std::process::id()) << 32)
 }
-fn view_shot(mut shot: Shot, local: ActorId) -> Shot {
-    if local == ActorId::Two {
-        shot.shooter = shot.shooter.other();
-        if let Impact::Body(id) = shot.impact {
-            shot.impact = Impact::Body(id.other());
-        }
-    }
-    shot
-}
 pub fn simulate(game: &mut Playground, elapsed: f64) {
     let mut online = game.online.take().expect("online resource");
     online.snapshot_age += elapsed;
@@ -84,6 +71,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
         );
     }
     if let Some(prediction) = &mut online.prediction {
+        prediction.observe_timing(online.network.measured_rtt(), elapsed);
         for snapshot in snapshots {
             let result = prediction.reconcile(snapshot);
             if !result.accepted {
@@ -107,11 +95,12 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
                     prediction.local.unwrap().deaths
                 );
             }
-            let mut events = CombatEvents::default();
-            for (slot, shot) in events.shots.iter_mut().zip(result.shots) {
-                *slot = Some(view_shot(shot, prediction.welcome.actor));
+            for (i, changed) in result.changed.iter().enumerate() {
+                if *changed {
+                    game.feedback.clear_actor(ActorId::ALL[i]);
+                }
             }
-            game.feedback.record(&events);
+            game.feedback.record_shots(result.shots.into_iter());
         }
     }
     let scripted = online.scripted();
@@ -168,16 +157,16 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
             game.combat.kills = confirmed.kills;
             game.combat.deaths = confirmed.deaths;
             let render_tick = snapshot.state.tick as f64 + (online.snapshot_age * 60.).min(6.) - 6.;
-            let remote = prediction.remote_at(render_tick);
-            online.remote_present = remote.is_some();
-            online.remote_movement = remote.map(|actor| actor.movement);
-            if let Some(actor) = remote {
-                online.remote_generation = actor.generation;
-            }
-            if let Some(remote) = remote {
-                game.combat.bot = remote.combat;
-                game.combat.bot_body = remote.movement.body;
-            }
+            online.actors = ActorId::ALL.map(|id| {
+                if id == prediction.welcome.actor {
+                    Some(Actor {
+                        combat: confirmed.combat,
+                        ..local
+                    })
+                } else {
+                    prediction.remote_at(id, render_tick)
+                }
+            });
         }
     }
     online.network.flush();
@@ -185,8 +174,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
         println!("ONLINE {}", online.label());
     }
     if online.network.status.terminal() {
-        online.remote_present = false;
-        online.remote_movement = None;
+        online.actors = [None; MAX_PLAYERS];
         game.input.clear();
         game.feedback = Default::default();
         if let Some(prediction) = &mut online.prediction {
@@ -214,7 +202,14 @@ impl NativeRoute {
         let Some(local) = snapshot.state.actors[prediction.welcome.actor.index()] else {
             return command;
         };
-        let Some(remote) = snapshot.state.actors[prediction.welcome.actor.other().index()] else {
+        let Some(remote) = snapshot
+            .state
+            .actors
+            .iter()
+            .flatten()
+            .find(|a| a.id != local.id)
+            .copied()
+        else {
             return command;
         };
         self.ticks += 1;

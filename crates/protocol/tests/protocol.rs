@@ -20,7 +20,7 @@ fn snapshot(tick: u64) -> Snapshot {
         },
         ack: tick.saturating_sub(10),
         last_applied: 0,
-        shots: [None; 2],
+        shots: [None; MAX_PLAYERS],
     }
 }
 fn prediction() -> Prediction {
@@ -265,9 +265,12 @@ fn interpolation_handles_midpoints_gaps_join_departure_death_and_respawn() {
     let mut b = snapshot(14);
     b.state.actors[1].as_mut().unwrap().movement.body.x += 40.;
     p.reconcile(b);
-    assert_eq!(p.remote_at(12.).unwrap().movement.body.x, BOT_SPAWN.x + 20.);
     assert_eq!(
-        p.remote_at(999.).unwrap().movement.body.x,
+        p.remote_at(ActorId::Two, 12.).unwrap().movement.body.x,
+        BOT_SPAWN.x + 20.
+    );
+    assert_eq!(
+        p.remote_at(ActorId::Two, 999.).unwrap().movement.body.x,
         BOT_SPAWN.x + 40.
     );
     let mut dead = snapshot(16);
@@ -278,19 +281,22 @@ fn interpolation_handles_midpoints_gaps_join_departure_death_and_respawn() {
         remaining_ticks: 180,
     };
     p.reconcile(dead);
-    assert!(!p.remote_at(15.).unwrap().combat.alive());
+    assert!(!p.remote_at(ActorId::Two, 15.).unwrap().combat.alive());
     let mut respawn = snapshot(196);
     respawn.state.actors[1].as_mut().unwrap().deaths = 1;
     p.reconcile(respawn);
-    assert_eq!(p.remote_at(195.).unwrap().movement.body.x, BOT_SPAWN.x);
+    assert_eq!(
+        p.remote_at(ActorId::Two, 195.).unwrap().movement.body.x,
+        BOT_SPAWN.x
+    );
     let mut gone = snapshot(197);
     gone.state.actors[1] = None;
     p.reconcile(gone);
-    assert!(p.remote_at(195.).is_none());
+    assert!(p.remote_at(ActorId::Two, 195.).is_none());
     let mut joined = snapshot(198);
     joined.state.actors[1].as_mut().unwrap().generation = 2;
     p.reconcile(joined);
-    assert_eq!(p.remote_at(195.).unwrap().generation, 2);
+    assert_eq!(p.remote_at(ActorId::Two, 195.).unwrap().generation, 2);
 }
 #[test]
 fn death_discards_prediction_and_confirmed_effects_are_never_duplicated() {
@@ -323,4 +329,125 @@ fn death_discards_prediction_and_confirmed_effects_are_never_duplicated() {
     let result = p.reconcile(snapshot(191));
     assert!(result.life_changed);
     assert!(p.local.unwrap().combat.alive());
+}
+
+#[test]
+fn maximum_eight_actor_snapshot_and_input_bundle_fit_one_renet_slice() {
+    let mut s = snapshot(100);
+    for id in ActorId::ALL {
+        s.shots[id.index()] = Some(ConfirmedShot {
+            tick: 99,
+            shot: Shot {
+                shooter: id,
+                weapon: WeaponId::M416,
+                origin: Vec2 { x: 2., y: 3. },
+                end: Vec2 { x: 4., y: 5. },
+                impact: Impact::Body(ActorId::ALL[(id.index() + 1) % MAX_PLAYERS]),
+                damage: 20,
+            },
+        });
+    }
+    let bytes = encode(&Message::Snapshot(s));
+    assert_eq!(bytes.len(), MAX_SNAPSHOT_BYTES);
+    assert!(bytes.len() < 1200);
+    assert_eq!(decode(&bytes), Ok(Message::Snapshot(s)));
+    let mut c = input(1);
+    c.command.aim_at = Some(Vec2 { x: 999., y: -10. });
+    c.command.select_weapon = Some(WeaponId::M416);
+    let bytes = encode(&Message::Inputs([Some(c); 3]));
+    assert_eq!(bytes.len(), 136);
+    for id in ActorId::ALL {
+        let mut q = InputQueue::new(id, 0);
+        for other in ActorId::ALL {
+            c.actor = other;
+            assert_eq!(
+                q.admit(c, 0),
+                if id == other {
+                    Admission::Accepted
+                } else {
+                    Admission::WrongActor
+                }
+            );
+        }
+    }
+}
+#[test]
+fn every_remote_interpolates_and_generation_reuse_clears_effect_identity() {
+    let mut p = prediction();
+    p.reconcile(snapshot(10));
+    let mut next = snapshot(12);
+    for a in next.state.actors.iter_mut().flatten() {
+        a.movement.body.x += 20.;
+    }
+    p.reconcile(next);
+    for id in ActorId::ALL.into_iter().skip(1) {
+        let shown = p.remote_at(id, 11.).unwrap();
+        assert_eq!(
+            shown.movement.body.x,
+            Actor::new(id, 1, &PRACTICE_ARENA).movement.body.x + 10.
+        );
+    }
+    next.state.tick = 14;
+    next.ack = 4;
+    next.state.actors[7] = None;
+    assert!(p.reconcile(next).changed[7]);
+    assert!(p.remote_at(ActorId::Eight, 10.).is_none());
+    next.state.tick = 16;
+    next.ack = 6;
+    next.state.actors[7] = Some(Actor::new(ActorId::Eight, 2, &PRACTICE_ARENA));
+    let result = p.reconcile(next);
+    assert!(result.changed[7]);
+    assert_eq!(p.remote_at(ActorId::Eight, 11.).unwrap().generation, 2);
+    assert_eq!(p.remote_at(ActorId::Eight, 11.).unwrap().kills, 0);
+}
+#[test]
+fn scheduling_is_bounded_and_recovers_without_running_extra_commands() {
+    let mut p = prediction();
+    p.observe_timing(0.150, 0.016);
+    p.reconcile(snapshot(10));
+    assert_eq!(p.target_lead, 13);
+    let initial = p.next_sequence;
+    p.command(InputCommand::default());
+    assert_eq!(p.next_sequence, initial + 1);
+    let mut late = snapshot(90);
+    late.last_applied = late.ack;
+    p.reconcile(late);
+    assert!(p.next_sequence >= late.ack + 11);
+    assert!(p.history_len() <= HISTORY_LIMIT);
+    p.observe_timing(5., 1.);
+    assert_eq!(p.target_lead, 24);
+    p.observe_timing(f64::MAX, 1.);
+    assert_eq!(p.target_lead, 24);
+    for _ in 0..20 {
+        p.observe_timing(0., 1.);
+    }
+    assert_eq!(p.target_lead, 22);
+    p.observe_timing(f64::NAN, 1.);
+    assert_eq!(p.target_lead, 22);
+}
+#[test]
+fn malformed_last_slot_shots_and_actor_tags_are_rejected() {
+    let mut s = snapshot(20);
+    s.state.actors[7].as_mut().unwrap().id = ActorId::One;
+    assert!(decode(&encode(&Message::Snapshot(s))).is_err());
+    let mut welcome = encode(&Message::Welcome(Welcome {
+        actor: ActorId::Eight,
+        generation: 1,
+        start_tick: 10,
+    }));
+    welcome[1] = 8;
+    assert!(decode(&welcome).is_err());
+    s = snapshot(20);
+    s.shots[7] = Some(ConfirmedShot {
+        tick: 20,
+        shot: Shot {
+            shooter: ActorId::Eight,
+            weapon: WeaponId::Pistol,
+            origin: Vec2::default(),
+            end: Vec2::default(),
+            impact: Impact::Body(ActorId::Eight),
+            damage: 18,
+        },
+    });
+    assert!(decode(&encode(&Message::Snapshot(s))).is_err());
 }

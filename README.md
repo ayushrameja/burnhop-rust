@@ -1,8 +1,8 @@
 # Burnhop Native
 
-A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. The field range now has an illustrated articulated pilot, distinct weapon artwork, layered terrain, bounded combat effects and a responsive native HUD. A two-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
+A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. The field range now has an illustrated articulated pilot, distinct weapon artwork, layered terrain, bounded combat effects and a responsive native HUD. A 2–8-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
 
-Read the latest [visual checkpoint](docs/handoffs/07-visual-checkpoint.md), [gameplay visuals handoff](docs/handoffs/06-gameplay-visuals.md), [visual direction](docs/VISUAL_DIRECTION.md), [saved checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
+Read the latest [eight-player checkpoint](docs/handoffs/09-eight-player-checkpoint.md), [eight-player reliability handoff](docs/handoffs/08-eight-player-reliability.md) and [visual checkpoint](docs/handoffs/07-visual-checkpoint.md), [gameplay visuals handoff](docs/handoffs/06-gameplay-visuals.md), [visual direction](docs/VISUAL_DIRECTION.md), [saved checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
 
 ## Pinned versions and choices
 
@@ -45,7 +45,7 @@ Windows x64 is the initial Windows build target. Windows ARM and installers are 
 
 ## Offline practice and direct-connect multiplayer
 
-Build once, then start the server and each client in **three separate terminals** from this repository:
+Build once, then start the server and each client in **separate terminals** from this repository:
 
 ```sh
 cargo build --workspace --locked
@@ -53,13 +53,13 @@ cargo build --workspace --locked
 cargo run -p burnhop-server --locked -- --bind 127.0.0.1:5000
 # Terminal 2: first native player
 cargo run -p burnhop-client --locked -- --connect 127.0.0.1:5000
-# Terminal 3: second native player
+# Terminal 3 and onward: repeat for players 2 through 8
 cargo run -p burnhop-client --locked -- --connect 127.0.0.1:5000
 ```
 
 These commands also work in separate PowerShell terminals on Windows after the setup above; Windows compilation and headless tests have passed in CI; interactive Windows execution is still unverified. On an already reachable LAN, bind an explicit interface address (for example `--bind 192.168.1.20:5000`) and pass that same server address to each client. Numeric IP addresses with ports are required; IPv6 uses `[address]:port`. The recorded agent transport checks exercised localhost; the user-reported multiplayer approval does not specify network conditions. No automatic firewall changes, NAT traversal, relay, room discovery or deployment is included. This uses Netcode's unsecure development authentication; it is a trusted direct-connect milestone, not authenticated public hosting.
 
-Both clients need the same protocol and gameplay versions. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. Your pilot has cyan equipment and a YOU label; the opponent has ochre equipment and a RIVAL label. There is no online bot. Close a client to leave; a new process can join the freed slot. A disconnected client must be restarted to join again. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
+All clients need protocol **2** and gameplay **0x4255_524e_0008_0001**. Older two-player builds are incompatible. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. Your pilot has cyan equipment and a YOU label; opponents have ochre equipment and stable P1–P8 labels. Hold **Tab** for identities, kills and deaths; release to close. A ninth player receives a full-server result. There is no online bot. Close a client to leave; a new process can join the freed slot. A disconnected client must be restarted to join again. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
 
 Offline practice remains the default, or can be selected explicitly:
 
@@ -69,7 +69,7 @@ cargo run -p burnhop-client --locked -- --offline
 
 To reproduce the native multiplayer smoke route, add `--online-playtest` to **both** client commands. Once both join, each moves/jumps/jets, fires, kills, dies and respawns using real UDP traffic and the shared authoritative rules. Watch for `ONLINE PLAYTEST COMPLETE` in both terminals. These are actual rendered clients with **injected commands**, including background input for this explicit test mode; this is not a human playtest. A key/click cancels the route. The ordinary mode clears input when unfocused. Add `--diagnostics` to the server command to log joins, leaves, confirmed combat and overload.
 
-The first protocol uses six ticks of input lead and six ticks of remote display delay, with no hit rewind. High latency, loss or stalls can produce corrections and missed short actions. See the [multiplayer handoff](docs/handoffs/04-multiplayer.md) for exact scheduling, bounds, delivery rules, known limits and the short human checklist.
+Protocol 2 uses measured RTT to reserve 6–24 input ticks, bounded by the server acceptance window. Full lossless eight-player snapshots fit in 1,185 application bytes and avoid Renet message slicing. Remote display still trails the received snapshot by six ticks; there is no hit rewind. Aiming at a delayed moving target can miss its current authoritative body. See the [reliability handoff](docs/handoffs/08-eight-player-reliability.md) for scheduling, packet measurements, controlled-loss results and the human checklist.
 
 ## Controls and offline practice
 
@@ -81,6 +81,7 @@ The first protocol uses six ticks of input lead and six ticks of remote display 
 | Mouse | Aim; hold left button to fire either weapon at its own cadence |
 | R | Reload selected weapon; empty magazines do not reload automatically |
 | 1 / 2 | Select pistol / M416; changing weapons cancels reload and takes 0.3 s |
+| Tab | Online: hold scoreboard; release or lose focus to close |
 | F5 | Offline only: reset both actors, health, ammunition, fuel, counters and input; release/repress controls afterward |
 | Window close button | Quit |
 
@@ -136,7 +137,7 @@ crates/protocol/        Wire codec, bounded input queues, prediction and Renet c
 crates/server/          Headless authoritative match and bounded server clock
 ```
 
-The core has zero dependencies, no Bevy types, and no clocks or networking. `MatchState` contains two optional reusable actors; `step_match` advances movement and combat once per tick. `step_practice` adapts the existing player/bot practice state into those same rules. Both shot decisions are made before damage, so simultaneous kills are valid. The unchanged movement-only `step` also supports local prediction. Actor snapshots include full movement state, combat state, neutral-input gate, scores and join generation. Serialization and Renet 2.0.0 / renet_netcode 2.0.0 remain outside the core; the headless server has no Bevy dependency. Coordinates retain top-left, X-right/Y-down `f64` browser pixels; Bevy converts only for display.
+The core has zero dependencies, no Bevy types, and no clocks or networking. `MatchState` contains eight optional reusable actors; `step_match` advances movement and combat once per tick. `step_practice` adapts the existing player/bot practice state into those same rules. All shot decisions use one post-movement living-body snapshot before damage. Shooter-ID order credits the first lethal hit once per victim; simultaneous kills are valid. The unchanged movement-only `step` also supports local prediction. Actor snapshots include full movement state, combat state, neutral-input gate, scores and join generation. Serialization and Renet 2.0.0 / renet_netcode 2.0.0 remain outside the core; the headless server has no Bevy dependency. Coordinates retain top-left, X-right/Y-down `f64` browser pixels; Bevy converts only for display.
 
 ## CI and validation limits
 
@@ -148,7 +149,7 @@ The browser project at `../burnhop` is a read-only reference and is not required
 
 The pilot's head, field cap, armor, connected limbs, boots, pack and two weapons come from one original polygon atlas generated once at startup. Practice and online share the same rig. Gait follows actual displacement; jet boots follow each actor's movement state. Reload, hit, death and respawn presentation follow confirmed state/events. The approved 36 × 68 body, arena, camera, controls and weapon rules are unchanged. Nearby terrain clips weapon art while confirmed rays keep their exact origin and endpoint.
 
-Health and fuel are at the lower left; selected weapon, magazine/reserve and reload/equip state are at the lower right. Below 1050 logical pixels wide, these move above the action to avoid covering pilots. Important states use text and numbers as well as color. The 480 × 320 minimum remains supported. Full menus, settings, Host/Join flows and audio are deferred. Visual work precedes eight-player expansion by explicit user decision.
+Health and fuel are at the lower left; selected weapon, magazine/reserve and reload/equip state are at the lower right. Below 1050 logical pixels wide, these move above the action to avoid covering pilots. Important states use text and numbers as well as color. The 480 × 320 minimum remains supported. Full menus, settings, Host/Join flows and audio are deferred. The eight-player mode reuses the approved rig and HUD, with a held scoreboard added.
 
 For an optional local frame-interval sample (180 warmup frames, 1800 measured frames), run on macOS:
 
@@ -160,6 +161,30 @@ This reports real frame intervals, including VSync and scheduling; it does not m
 
 At compact window sizes, press **F1** to reveal or hide controls. Health/fuel and weapon/ammo stay in short corner readouts; full connection failures remain in the central message.
 
-Optional native evidence capture uses `BURNHOP_CAPTURE_DIR=/absolute/local/path` with an existing playtest command. It captures a bounded set of state transitions and up to 20 F9 snapshots as lossless PPM files without adding encoder dependencies. Keep this directory outside source control; only selected compressed PNG review images belong in `docs/screenshots/06-gameplay-visuals/`. This environment variable and F9 are inspection aids, not a user-facing photo mode.
+Optional native evidence capture uses `BURNHOP_CAPTURE_DIR=/absolute/local/path` with an existing playtest command. It captures a bounded set of state transitions and up to 20 F9 snapshots as lossless PPM files without adding encoder dependencies. Keep this directory outside source control; only selected compressed PNG review images belong in the relevant `docs/screenshots/` milestone directory. This environment variable and F9 are inspection aids, not a user-facing photo mode.
 
 The user reports completing the visual playtest and approving the result on 2026-09-12. The approval, visual-milestone evidence and remaining Windows/individual-input checks are recorded in [06-gameplay-visuals.md](docs/handoffs/06-gameplay-visuals.md). Prior CI results above apply to their linked commits; the approved visual implementation `bf34b95bf0f9953b85635b8ec48a645ccfba45a9` passed all 90 tests and locked builds on macOS ARM64 and Windows x64 in [Native checks 34681615290](https://github.com/ayushrameja/burnhop-rust/actions/runs/34681615290). See [07-visual-checkpoint.md](docs/handoffs/07-visual-checkpoint.md) for evidence and limits. Verify each later commit's own CI run.
+
+
+## Eight-player reliability checks
+
+Milestone 08 passed manager review with no blocking issues, according to the checkpoint brief. Its authorized save and exact-commit CI validation are recorded in [checkpoint 09](docs/handoffs/09-eight-player-checkpoint.md). New human playtest approval remains pending. Local Mac validation passes 102 tests, strict workspace Clippy and locked builds. A 605-second real-UDP soak at 100 ms RTT, jitter and 1% loss kept eight seats active through 13 replacement joins, 916 deaths and 906 respawns, with no dropped server ticks. Five shorter packet-impairment profiles and actual native rendering were checked. These are controlled synthetic results, not eight-human, internet or Windows hardware validation. See [measurements](docs/measurements/08-eight-player/README.md) and [native screenshots](docs/screenshots/08-eight-player-reliability/README.md).
+
+Long checks are opt-in; they use ordinary gameplay commands over localhost UDP:
+
+```sh
+cargo run -p burnhop-server --example reliability --locked -- --seconds 30 --players 8 --profile baseline
+# Profiles: baseline, 50, 100, 150, stall
+cargo run -p burnhop-server --example reliability --locked -- --seconds 605 --players 8 --profile 100 --churn
+```
+
+The numeric profiles are nominal RTT milliseconds. Jitter/loss act separately in each direction on encrypted UDP datagrams, including control and ACK traffic. The stall profile stops client polling/input for one second while the server and proxies continue. `--churn` replaces one client every 45 seconds. The harness prints progress and a final JSON record; keep the laptop awake for wall-clock tests.
+
+For an eight-pilot native review, start this companion in one terminal, then connect one ordinary native client to port 5001 in another. The companion starts seven synthetic clients after the native client joins. The optional `--auto` sequence gathers, jets, removes/replaces a client, then fights. The phase-file path must be writable and local; writing `stop` closes the companion.
+
+```sh
+cargo run -p burnhop-server --example rendered_scene --locked -- 127.0.0.1:5001 /tmp/burnhop-review-phase --auto
+cargo run -p burnhop-client --locked -- --connect 127.0.0.1:5001
+```
+
+`BURNHOP_FRAME_PROFILE=1` also works with `--connect` and reports 1,800 wall-clock frame intervals after 180 warmup frames, plus reconciliation/history/lead counters. Keep screenshot capture disabled for timing. `BURNHOP_REVIEW_TAB=1` holds the scoreboard only for explicit screenshot inspection; ordinary Tab behavior is covered separately. All counters are local and bounded; no analytics service is used.

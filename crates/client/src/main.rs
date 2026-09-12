@@ -7,6 +7,7 @@ mod online;
 mod pilot;
 mod playtest;
 mod review;
+mod scoreboard;
 mod terrain;
 #[cfg(test)]
 mod tests;
@@ -37,6 +38,14 @@ struct Playground {
     snap_camera: bool,
     route: Option<playtest::Route>,
     combat_route: Option<playtest::CombatRoute>,
+}
+impl Playground {
+    fn local_id(&self) -> burnhop_gameplay_core::ActorId {
+        self.online
+            .as_ref()
+            .and_then(|o| o.network.welcome)
+            .map_or(burnhop_gameplay_core::ActorId::One, |w| w.actor)
+    }
 }
 impl Default for Playground {
     fn default() -> Self {
@@ -139,6 +148,7 @@ fn main() {
                 pilot::setup,
                 combat_view::setup,
                 hud::setup,
+                scoreboard::setup,
             ),
         )
         .add_systems(
@@ -152,6 +162,7 @@ fn main() {
                 pilot::present,
                 combat_view::present,
                 hud::present,
+                scoreboard::present,
                 review::capture,
             )
                 .chain(),

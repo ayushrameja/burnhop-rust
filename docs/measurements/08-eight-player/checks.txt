@@ -1,0 +1,266 @@
+Final local validation, 2026-09-12
+Native checkout; uncommitted changes from 0a7c7e3fe0692f05a5a9cbaef8da75bd91174957
+No Windows/current-change CI result inferred.
+
+$ cargo fmt --all -- --check
+
+$ cargo clippy --workspace --all-targets --locked -- -D warnings
+    Checking burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+    Checking burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+    Checking burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1.31s
+
+$ cargo test --workspace --locked
+   Compiling burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+   Compiling burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+   Compiling burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `test` profile [optimized + debuginfo] target(s) in 2.70s
+     Running unittests src/main.rs (target/debug/deps/burnhop_client-b932991cee4b7af3)
+
+running 30 tests
+test hud::tests::controls_disclosure_starts_closed_and_resets_on_focus_or_desktop ... ok
+test pilot::tests::artwork_cover_query_cannot_skip_near_wall ... ok
+test pilot::tests::legs_retain_length_for_entire_stride ... ok
+test pilot::tests::reused_actor_slot_and_reset_discard_pose_history ... ok
+test pilot::tests::a_skipped_death_cycle_still_resets_pose_in_every_slot ... ok
+test combat_view::tests::lifecycle_clears_pending_active_hits_and_reset_epoch ... ok
+test combat_view::tests::sustained_batches_remain_bounded_and_expire ... ok
+test pilot::tests::stance_cancels_world_displacement_and_never_sinks ... ok
+test pilot::tests::state_priority_respects_life_support_and_thrust ... ok
+test playtest::rendered_route_has_valid_checkpoints ... ok
+test tests::actual_bevy_projection_converts_cursor_with_camera_translation_resize_and_retina_scale ... ok
+test tests::both_shift_keys_form_one_jet_hold_and_repeats_cannot_reactivate ... ok
+test tests::camera_bounds_and_resizing_cover_wide_tall_and_tiny_windows ... ok
+test pilot::tests::articulated_arms_keep_constant_length_at_all_aims_and_reload_phases ... ok
+test scoreboard::tests::scoreboard_reports_all_slots_and_removes_departures_and_old_scores ... ok
+test playtest::rendered_combat_route_completes_through_the_real_input_buffer ... ok
+test tests::cursor_exit_cancels_fire_without_canceling_movement_and_reentry_needs_new_press ... ok
+test tests::focus_and_respawn_clear_all_combat_intent_and_pending_edges ... ok
+test tests::focus_clear_cancels_held_pending_and_requires_new_press ... ok
+test tests::long_gaps_are_bounded_and_do_not_leave_backlog ... ok
+test tests::mouse_taps_reload_and_selection_edges_are_consumed_once ... ok
+test tests::rapid_distinct_taps_stay_ordered_and_opposite_directions_cancel ... ok
+test tests::reset_discards_held_keys_and_pending_actions ... ok
+test tests::taps_survive_frames_without_ticks_and_edges_do_not_repeat_during_catchup ... ok
+test tests::presentation_schedules_feed_equivalent_commands_for_the_same_event_stream ... ok
+test tests::online_bevy_f5_is_ignored_and_focus_clears_input_without_resetting_clock ... ok
+test tests::bevy_keyboard_messages_map_shift_and_focus_loss_clears_intent ... ok
+test combat_view::tests::eight_shooters_keep_effects_bounded_and_cleanup_is_per_slot ... ok
+test scoreboard::tests::native_tab_hold_release_focus_loss_and_disconnect_preserve_input ... ok
+test hud::tests::native_hud_disclosure_and_resize_preserve_gameplay_input ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/burnhop_gameplay_core-aeac0d0d2f036554)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/combat.rs (target/debug/deps/combat-b71b565081a5d8ca)
+
+running 22 tests
+test cover_wins_ties_and_barrel_protrusion_cannot_skip_near_cover ... ok
+test damage_retains_reference_falloff_and_never_exceeds_remaining_health ... ok
+test bot_reloads_and_resumes_its_limited_attack ... ok
+test both_reference_weapons_repeat_on_hold_at_exact_cadence ... ok
+test bot_dies_and_respawns_after_exactly_180_ticks_with_full_state ... ok
+test bot_attack_has_grace_one_second_cadence_and_obeys_terrain ... ok
+test focus_release_cancels_fire_jet_and_jump_buffer_but_reload_time_continues ... ok
+test held_reload_edge_does_not_restart_or_queue_another_reload ... ok
+test empty_trigger_never_auto_reloads_or_spends_reserve ... ok
+test invalid_missing_or_zero_length_aim_cannot_fire_or_corrupt_direction ... ok
+test partial_reserve_reload_and_full_or_empty_reserve_requests ... ok
+test player_death_blocks_all_actions_and_respawn_requires_fresh_intent ... ok
+test ray_handles_vertical_reverse_start_overlap_and_range_boundaries ... ok
+test reload_consumes_exact_ticks_and_cannot_fire_during_reload ... ok
+test repeated_switches_and_releases_do_not_bypass_longer_weapon_cooldown ... ok
+test reset_restores_both_lives_ammo_timers_counters_and_cancels_stale_intent ... ok
+test simultaneous_lethal_shots_are_resolved_before_both_deaths ... ok
+test switching_cancels_reload_preserves_inventory_and_enforces_equip_delay ... ok
+test taps_release_and_rapid_clicks_never_bypass_cooldown ... ok
+test whole_range_ray_stops_at_a_thin_wall_before_any_body_even_at_extreme_distance ... ok
+test combat_wrapper_preserves_approved_movement_when_not_hit ... ok
+test wrong_tick_is_atomic_and_identical_combat_commands_replay_on_this_machine ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/eight_players.rs (target/debug/deps/eight_players-0941b963e5cd5cbe)
+
+running 3 tests
+test eight_candidates_have_full_body_clearance_and_support_and_joins_separate ... ok
+test multiple_attackers_share_tick_bodies_but_cannot_duplicate_kills ... ok
+test eight_simultaneous_shooters_each_die_once_and_respawn_with_fresh_inventory ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/movement.rs (target/debug/deps/movement-76055fb3c0f71bf4)
+
+running 17 tests
+test buffer_checks_the_path_and_never_turns_separate_jump_into_thrust ... ok
+test acceleration_braking_and_speed_caps ... ok
+test direct_jet_takes_off_consumes_grace_and_stops_on_release ... ok
+test buffered_landing_tap_survives_release_and_preserves_horizontal_speed ... ok
+test jet_tapers_caps_rise_and_spends_only_the_final_partial_tick ... ok
+test exhaustion_and_landing_require_fresh_jet_press ... ok
+test jump_trajectory_matches_reference_and_does_not_autojet_or_repeat ... ok
+test ledge_grace_is_available_late_but_consumed_and_expires ... ok
+test platform_top_is_walkable_and_final_support_is_lost_at_edge ... ok
+test arena_walls_floor_and_ceiling_stop_velocity ... ok
+test practice_geometry_spawn_and_idle_support ... ok
+test regeneration_waits_exactly_24_ticks_then_caps_at_100 ... ok
+test release_cancels_buffer_and_reset_restores_all_player_fields ... ok
+test simultaneous_jump_and_direct_jet_preserve_the_initial_jump_impulse ... ok
+test thin_platform_sweeps_from_all_four_sides_at_extreme_speed ... ok
+test wall_slide_corner_contacts_and_geometry_order ... ok
+test identical_commands_replay_exactly_on_this_machine_and_wrong_ticks_are_rejected ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/multiplayer.rs (target/debug/deps/multiplayer-8778f0bbfcde237b)
+
+running 4 tests
+test absent_actor_never_fires_or_absorbs_hits_and_wrong_ticks_are_atomic ... ok
+test neutral_missing_input_cancels_human_fire_jet_without_pausing_other_actor ... ok
+test both_human_actors_use_approved_movement_and_cannot_reset_the_match ... ok
+test simultaneous_human_shots_kill_both_then_respawn_with_full_state ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/practice_regression.rs (target/debug/deps/practice_regression-b9b9629f48622191)
+
+running 1 test
+test approved_practice_matches_pre_refactor_12000_tick_trace ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running unittests src/lib.rs (target/debug/deps/burnhop_protocol-203c24072b3e84fc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/protocol.rs (target/debug/deps/protocol-c47f059502fcf7f7)
+
+running 18 tests
+test compatibility_requires_both_versions ... ok
+test bursts_cannot_accelerate_and_queue_and_rates_are_bounded ... ok
+test focus_release_is_a_barrier_to_queued_and_late_commands ... ok
+test complete_snapshot_and_inputs_round_trip_with_bounded_wire_size ... ok
+test duplicates_stale_reordered_and_far_future_commands_have_deliberate_outcomes ... ok
+test malformed_last_slot_shots_and_actor_tags_are_rejected ... ok
+test every_remote_interpolates_and_generation_reuse_clears_effect_identity ... ok
+test death_discards_prediction_and_confirmed_effects_are_never_duplicated ... ok
+test interpolation_handles_midpoints_gaps_join_departure_death_and_respawn ... ok
+test maximum_eight_actor_snapshot_and_input_bundle_fit_one_renet_slice ... ok
+test malformed_sizes_tags_booleans_floats_and_trailing_bytes_are_rejected ... ok
+test missing_input_immediately_cancels_fire_and_thrust_and_retires_ack ... ok
+test ownership_reset_local_ticks_and_aim_limits_are_validated ... ok
+test reconciliation_restores_complete_state_replays_only_unacknowledged_movement ... ok
+test scheduling_is_bounded_and_recovers_without_running_extra_commands ... ok
+test stale_invalid_ack_and_wrong_generation_snapshots_cannot_rewind_state ... ok
+test prediction_buffers_stop_growing_and_resume_after_a_stall ... ok
+test arbitrary_byte_inputs_do_not_panic_or_allocate_from_peer_lengths ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/burnhop_server-a5e2007eb0f2a196)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/burnhop_server-570e68dbfae4b3ff)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/local_transport.rs (target/debug/deps/local_transport-d00e1e9b18e83c7d)
+
+running 7 tests
+test headless_clock_bounds_overload_and_does_not_replay_elapsed_backlog ... ok
+test real_transport_rejects_incompatible_clients_before_actor_assignment ... ok
+test real_transport_rejects_actor_spoofing_and_malformed_messages_cleans_up ... ok
+test real_transport_rejects_ninth_player_and_an_input_message_flood ... ok
+test real_udp_with_injected_zero_to_three_tick_jitter_loss_and_reordering ... ok
+test real_udp_server_two_synthetic_clients_duel_disconnect_and_fresh_join ... ok
+test eight_owners_disconnect_and_fresh_generations_have_clean_state ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+
+   Doc-tests burnhop_gameplay_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests burnhop_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests burnhop_server
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+$ cargo build --workspace --locked
+   Compiling burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1.38s
+
+$ cargo build --workspace --locked --target aarch64-apple-darwin
+   Compiling burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+   Compiling burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+   Compiling burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 2.43s
+
+$ cargo tree -p burnhop-gameplay-core --locked
+burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+
+$ cargo tree -p burnhop-server --locked
+burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+├── burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+├── burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+│   ├── burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+│   ├── renet v2.0.0
+│   │   ├── bytes v1.12.1
+│   │   ├── log v0.4.34
+│   │   └── octets v0.3.7
+│   └── renet_netcode v2.0.0
+│       ├── log v0.4.34
+│       ├── renet v2.0.0 (*)
+│       └── renetcode v2.0.0
+│           ├── chacha20poly1305 v0.10.1
+│           │   ├── aead v0.5.2
+│           │   │   ├── crypto-common v0.1.7
+│           │   │   │   ├── generic-array v0.14.7
+│           │   │   │   │   └── typenum v1.20.1
+│           │   │   │   │   [build-dependencies]
+│           │   │   │   │   └── version_check v0.9.5
+│           │   │   │   ├── rand_core v0.6.4
+│           │   │   │   │   └── getrandom v0.2.17
+│           │   │   │   │       ├── cfg-if v1.0.4
+│           │   │   │   │       └── libc v0.2.189
+│           │   │   │   └── typenum v1.20.1
+│           │   │   └── generic-array v0.14.7 (*)
+│           │   ├── chacha20 v0.9.1
+│           │   │   ├── cfg-if v1.0.4
+│           │   │   └── cipher v0.4.4
+│           │   │       ├── crypto-common v0.1.7 (*)
+│           │   │       ├── inout v0.1.4
+│           │   │       │   └── generic-array v0.14.7 (*)
+│           │   │       └── zeroize v1.9.0
+│           │   ├── cipher v0.4.4 (*)
+│           │   ├── poly1305 v0.8.0
+│           │   │   ├── opaque-debug v0.3.1
+│           │   │   └── universal-hash v0.5.1
+│           │   │       ├── crypto-common v0.1.7 (*)
+│           │   │       └── subtle v2.6.1
+│           │   └── zeroize v1.9.0
+│           └── log v0.4.34
+├── renet v2.0.0 (*)
+└── renet_netcode v2.0.0 (*)

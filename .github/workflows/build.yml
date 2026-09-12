@@ -36,7 +36,7 @@ jobs:
         run: cargo test -p burnhop-gameplay-core --test practice_regression --locked --target ${{ matrix.target }} -- --nocapture
       - name: Lints
         run: cargo clippy --workspace --all-targets --locked --target ${{ matrix.target }} -- -D warnings
-      - name: Workspace tests including protocol and localhost UDP (no window required)
+      - name: Workspace tests including eight-player ownership and localhost UDP (no window required)
         run: cargo test --workspace --locked --target ${{ matrix.target }}
       - name: Headless server without client or GPU dependencies
         run: cargo check -p burnhop-server --locked --target ${{ matrix.target }}

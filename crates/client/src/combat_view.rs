@@ -8,8 +8,7 @@ use burnhop_gameplay_core::{self as core, ActorId, CombatEvents, Impact, Shot};
 const MAX_SHOTS: usize = 24;
 const EFFECT_LIFE: f32 = 0.18;
 pub struct Feedback {
-    pub player_hit: f32,
-    bot_hit: f32,
+    hits: [f32; core::MAX_PLAYERS],
     traces: Vec<(Shot, f32)>,
     pending: Vec<Shot>,
     pub epoch: u64,
@@ -17,8 +16,7 @@ pub struct Feedback {
 impl Default for Feedback {
     fn default() -> Self {
         Self {
-            player_hit: 0.,
-            bot_hit: 0.,
+            hits: [0.; core::MAX_PLAYERS],
             traces: Vec::with_capacity(MAX_SHOTS),
             pending: Vec::with_capacity(MAX_SHOTS),
             epoch: 0,
@@ -31,10 +29,10 @@ impl Feedback {
             .iter()
             .any(|(s, ttl)| s.impact == Impact::Terrain && *ttl > 0.13)
     }
-    pub fn has_shot(&self, weapon: core::WeaponId) -> bool {
+    pub fn has_shot(&self, actor: ActorId, weapon: core::WeaponId) -> bool {
         self.traces
             .iter()
-            .any(|(s, ttl)| s.shooter == ActorId::One && s.weapon == weapon && *ttl > 0.13)
+            .any(|(s, ttl)| s.shooter == actor && s.weapon == weapon && *ttl > 0.13)
     }
     pub fn kick(&self, actor: usize) -> f32 {
         self.traces
@@ -44,11 +42,7 @@ impl Feedback {
             .fold(0., f32::max)
     }
     pub fn hit(&self, actor: usize) -> f32 {
-        if actor == 0 {
-            self.player_hit
-        } else {
-            self.bot_hit
-        }
+        self.hits[actor]
     }
     pub fn clear_actor(&mut self, actor: ActorId) {
         self.traces.retain(|(s, _)| {
@@ -56,11 +50,7 @@ impl Feedback {
         });
         self.pending
             .retain(|s| s.shooter != actor && !matches!(s.impact,Impact::Body(id) if id==actor));
-        if actor == ActorId::One {
-            self.player_hit = 0.;
-        } else {
-            self.bot_hit = 0.;
-        }
+        self.hits[actor.index()] = 0.;
     }
     pub fn record(&mut self, events: &CombatEvents) {
         if events.movement.reset {
@@ -73,11 +63,12 @@ impl Feedback {
         if events.bot_respawned || events.bot_died {
             self.clear_actor(ActorId::Two);
         }
-        for &shot in events.shots.iter().flatten() {
-            match shot.impact {
-                Impact::Body(ActorId::One) => self.player_hit = 0.12,
-                Impact::Body(ActorId::Two) => self.bot_hit = 0.12,
-                _ => {}
+        self.record_shots(events.shots.iter().flatten().copied());
+    }
+    pub fn record_shots(&mut self, shots: impl Iterator<Item = Shot>) {
+        for shot in shots {
+            if let Impact::Body(id) = shot.impact {
+                self.hits[id.index()] = 0.12;
             }
             if self.pending.len() < MAX_SHOTS {
                 self.pending.push(shot);
@@ -85,8 +76,9 @@ impl Feedback {
         }
     }
     fn advance(&mut self, dt: f32) {
-        self.player_hit = (self.player_hit - dt).max(0.);
-        self.bot_hit = (self.bot_hit - dt).max(0.);
+        for hit in &mut self.hits {
+            *hit = (*hit - dt).max(0.);
+        }
         for (_, ttl) in &mut self.traces {
             *ttl -= dt;
         }
@@ -223,7 +215,7 @@ pub fn present(
         let to = Vec2::new(shot.end.x as f32, -shot.end.y as f32);
         let ray = to - from;
         let unit = ray.normalize_or_zero();
-        let hue = color(if shot.shooter == ActorId::One {
+        let hue = color(if shot.shooter == game.local_id() {
             CREAM
         } else {
             OCHRE
@@ -302,6 +294,29 @@ mod tests {
         assert!(f.traces.is_empty());
     }
     #[test]
+    fn eight_shooters_keep_effects_bounded_and_cleanup_is_per_slot() {
+        let mut f = Feedback::default();
+        for _ in 0..6000 {
+            f.record_shots(ActorId::ALL.into_iter().map(|id| Shot {
+                shooter: id,
+                impact: Impact::Body(ActorId::ALL[(id.index() + 1) % core::MAX_PLAYERS]),
+                ..shot()
+            }));
+            f.advance(1. / 60.);
+            assert!(f.traces.len() <= MAX_SHOTS && f.pending.len() <= MAX_SHOTS);
+        }
+        for id in ActorId::ALL {
+            f.clear_actor(id);
+            assert_eq!(f.hit(id.index()), 0.);
+            assert!(
+                f.traces
+                    .iter()
+                    .all(|(s, _)| s.shooter != id && s.impact != Impact::Body(id))
+            );
+        }
+        assert!(f.traces.is_empty());
+    }
+    #[test]
     fn lifecycle_clears_pending_active_hits_and_reset_epoch() {
         let mut f = Feedback::default();
         f.record(&CombatEvents {
@@ -315,7 +330,7 @@ mod tests {
         });
         f.clear_actor(ActorId::Two);
         assert!(f.pending.is_empty() && f.traces.is_empty());
-        assert_eq!(f.bot_hit, 0.);
+        assert_eq!(f.hits[1], 0.);
         f.record(&CombatEvents {
             movement: core::StepEvents {
                 reset: true,

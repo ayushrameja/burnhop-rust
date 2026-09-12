@@ -4,7 +4,7 @@ Milestone 06, 2026-09-12. Primary reference: the sibling browser game's actual `
 
 ## Identity and composition
 
-Keep the expressive oversized head, field cap, sage armor, articulated trousers and substantial jet boots. Use one illustrated field pilot with a small cyan equipment stripe for the local player, ochre for the opponent, plus explicit YOU / BOT / RIVAL labels. Practice and online use exactly the same artwork and pose builder. No customization system.
+Keep the expressive oversized head, field cap, sage armor, articulated trousers and substantial jet boots. Use one illustrated field pilot with a small cyan equipment stripe for the local player, ochre for opponents, plus explicit YOU / BOT labels in practice and YOU / P1–P8 identity labels online. Practice and online use exactly the same artwork and pose builder. No customization system.
 
 The arena becomes a quiet desert foothill training range. Broad low-contrast mountain layers, a pale moon, sparse scrub and a modest range sign establish depth. Solid terrain has a dark cut face, warm aggregate facets, a clearly lit sage top surface, and small inset construction marks. Every solid is drawn from the existing collision rectangles. Scenery is behind solids and actors, lower in contrast, without bright platform-like edges. No new geometry or invisible colliders.
 
@@ -37,7 +37,7 @@ The weapon pivot stays at the approved body-center aim origin. Pistol and M416 h
 
 Idle breath is less than one pixel on head/shoulders; soles and weapon origin remain fixed. Walk phase follows actual rendered displacement, reversing naturally during backward motion. Stance feet counteract body travel; recovery lifts at most five pixels. Jump/fall tuck the legs; thrust separates the boot stance and shows two small cyan exhaust cones. Hit response is a brief warm tint; death folds the same rig locally and fades it, with the HUD explaining respawn. No flying ragdoll or confusing collision trail.
 
-Reload moves the magazine/support hand cosmetically from authoritative remaining ticks; firing, reloading, equip, death and respawn never change gameplay timers. Confirmed shot recoil is limited to the slide/bolt detail, not the ray angle. Effect slots are allocated once: at most 24 shots, each with one tracer, one origin flash and three endpoint sparks, plus four exhaust cones across both actors. Tracers expire within 0.10 seconds, impacts within 0.18; effects clear on actor lifecycle/absence, reset and disconnect. Existing online shot deduplication is retained.
+Reload moves the magazine/support hand cosmetically from authoritative remaining ticks; firing, reloading, equip, death and respawn never change gameplay timers. Confirmed shot recoil is limited to the slide/bolt detail, not the ray angle. Effect slots are allocated once: at most 24 shots, each with one tracer, one origin flash and three endpoint sparks, plus sixteen exhaust cones across eight actors. Tracers expire within 0.10 seconds, impacts within 0.18; effects clear on actor lifecycle/absence, reset and disconnect. Existing online shot deduplication is retained.
 
 ## Native HUD
 
@@ -45,4 +45,4 @@ Top left: compact Burnhop / practice-or-direct-connect identity. Top right: oppo
 
 Use Bevy's existing bundled Fira Mono for clear numeric hierarchy and range-sign lettering. No extra font files. Avoid the old full-width multiline diagnostic slab; technical timing/route diagnostics stay in opt-in logs.
 
-Review is the playable native result. Eight-player networking, menus, audio and additional maps come later.
+Review is the playable native result. Milestone 08 reuses this direction for eight players and adds a centered held-Tab scoreboard with identity/kills/deaths, readable at the existing 480 × 320 minimum. It closes on release, focus loss or disconnect; ordinary combat retains the short edge HUD. Menus, audio and additional maps remain deferred.

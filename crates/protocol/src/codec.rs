@@ -86,7 +86,14 @@ macro_rules! tags {
         fn read(input: &mut &[u8]) -> Result<Self> { match u8::read(input)? { $($tag => Ok($value)),*, _ => Err("invalid enum") } }
     } };
 }
-tags!(ActorId { 0 => ActorId::One, 1 => ActorId::Two });
+impl Wire for ActorId {
+    fn write(&self, out: &mut Vec<u8>) {
+        (self.index() as u8).write(out);
+    }
+    fn read(input: &mut &[u8]) -> Result<Self> {
+        ActorId::from_index(u8::read(input)? as usize).ok_or("invalid actor ID")
+    }
+}
 tags!(WeaponId { 0 => WeaponId::Pistol, 1 => WeaponId::M416 });
 tags!(MoveAxis { 0 => MoveAxis::Idle, 1 => MoveAxis::Left, 2 => MoveAxis::Right });
 tags!(Rejection { 0 => Rejection::Compatibility, 1 => Rejection::Full, 2 => Rejection::InvalidInput,
@@ -160,33 +167,90 @@ record!(InputCommand {
     reload_pressed,
     select_weapon
 });
-record!(Player {
-    body,
-    velocity,
-    grounded,
-    coyote_ticks,
-    jump_buffer_ticks,
-    fuel,
-    fuel_delay_ticks,
-    thrust_latched,
-    thrusting
-});
-record!(WeaponState {
-    id,
-    ammo,
-    reserve,
-    cooldown_ticks,
-    reload_ticks
-});
-record!(Combatant {
-    health,
-    life,
-    selected,
-    weapons,
-    equip_ticks,
-    aim,
-    reload_was_pressed
-});
+// Lossless schema packing: fixed body dimensions are part of gameplay compatibility;
+// flags share one byte, and tuning bounds weapon timers/ammo/equip to a byte.
+fn byte(value: u16, out: &mut Vec<u8>) {
+    u8::try_from(value).expect("schema byte bound").write(out);
+}
+impl Wire for Player {
+    fn write(&self, out: &mut Vec<u8>) {
+        self.body.x.write(out);
+        self.body.y.write(out);
+        self.velocity.write(out);
+        (u8::from(self.grounded)
+            | (u8::from(self.thrust_latched) << 1)
+            | (u8::from(self.thrusting) << 2))
+            .write(out);
+        self.coyote_ticks.write(out);
+        self.jump_buffer_ticks.write(out);
+        self.fuel.write(out);
+        self.fuel_delay_ticks.write(out);
+    }
+    fn read(input: &mut &[u8]) -> Result<Self> {
+        let body = Rect::new(
+            f64::read(input)?,
+            f64::read(input)?,
+            BODY_WIDTH,
+            BODY_HEIGHT,
+        );
+        let velocity = Vec2::read(input)?;
+        let flags = u8::read(input)?;
+        if flags > 7 {
+            return Err("movement flags");
+        }
+        Ok(Self {
+            body,
+            velocity,
+            grounded: flags & 1 != 0,
+            thrust_latched: flags & 2 != 0,
+            thrusting: flags & 4 != 0,
+            coyote_ticks: Wire::read(input)?,
+            jump_buffer_ticks: Wire::read(input)?,
+            fuel: Wire::read(input)?,
+            fuel_delay_ticks: Wire::read(input)?,
+        })
+    }
+}
+impl Wire for WeaponState {
+    fn write(&self, out: &mut Vec<u8>) {
+        self.id.write(out);
+        byte(self.ammo, out);
+        self.reserve.write(out);
+        byte(self.cooldown_ticks, out);
+        byte(self.reload_ticks, out);
+    }
+    fn read(input: &mut &[u8]) -> Result<Self> {
+        Ok(Self {
+            id: Wire::read(input)?,
+            ammo: u8::read(input)?.into(),
+            reserve: Wire::read(input)?,
+            cooldown_ticks: u8::read(input)?.into(),
+            reload_ticks: u8::read(input)?.into(),
+        })
+    }
+}
+impl Wire for Combatant {
+    fn write(&self, out: &mut Vec<u8>) {
+        self.health.write(out);
+        self.life.write(out);
+        self.selected.write(out);
+        self.weapons.write(out);
+        byte(self.equip_ticks, out);
+        self.aim.write(out);
+        self.reload_was_pressed.write(out);
+    }
+    fn read(input: &mut &[u8]) -> Result<Self> {
+        Ok(Self {
+            health: Wire::read(input)?,
+            life: Wire::read(input)?,
+            selected: Wire::read(input)?,
+            weapons: Wire::read(input)?,
+            equip_ticks: u8::read(input)?.into(),
+            aim: Wire::read(input)?,
+            reload_was_pressed: Wire::read(input)?,
+        })
+    }
+}
 record!(Actor {
     id,
     generation,
@@ -289,6 +353,17 @@ pub fn decode(mut input: &[u8]) -> Result<Message> {
     if let Message::Snapshot(snapshot) = message {
         if snapshot.state.tick > u64::MAX - 10_000 || snapshot.last_applied > snapshot.ack {
             return Err("snapshot tick/ack");
+        }
+        for (i, event) in snapshot.shots.iter().enumerate() {
+            if let Some(event) = event
+                && (event.shot.shooter.index() != i
+                    || event.tick >= snapshot.state.tick
+                    || snapshot.state.actors[i].is_none()
+                    || event.shot.damage > MAX_HEALTH
+                    || matches!(event.shot.impact, Impact::Body(id) if id.index() == i || snapshot.state.actors[id.index()].is_none()))
+            {
+                return Err("invalid confirmed shot");
+            }
         }
         for (i, actor) in snapshot.state.actors.iter().enumerate() {
             if let Some(a) = actor {

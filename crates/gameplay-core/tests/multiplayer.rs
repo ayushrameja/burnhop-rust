@@ -2,7 +2,7 @@ use burnhop_gameplay_core::*;
 fn encounter() -> MatchState {
     MatchState {
         tick: 0,
-        actors: ActorId::ALL.map(|id| Some(Actor::new(id, 1, &PRACTICE_ARENA))),
+        actors: ActorId::ALL.map(|id| (id.index() < 2).then(|| Actor::new(id, 1, &PRACTICE_ARENA))),
     }
 }
 fn commands(state: &MatchState) -> [InputCommand; 2] {
@@ -15,7 +15,7 @@ fn commands(state: &MatchState) -> [InputCommand; 2] {
 fn both_human_actors_use_approved_movement_and_cannot_reset_the_match() {
     let mut state = encounter();
     step_match(&mut state, [InputCommand::default(); 2], &PRACTICE_ARENA).unwrap();
-    let mut worlds = state.actors.map(|a| World {
+    let mut worlds = [state.actors[0], state.actors[1]].map(|a| World {
         tick: 1,
         player: a.unwrap().movement,
     });
@@ -56,15 +56,18 @@ fn simultaneous_human_shots_kill_both_then_respawn_with_full_state() {
         actor.combat.health = 1;
     }
     let mut inputs = commands(&state);
-    for id in ActorId::ALL {
+    for id in [ActorId::One, ActorId::Two] {
         inputs[id.index()].fire_held = true;
         inputs[id.index()].aim_at = Some(body_center(
-            state.actors[id.other().index()].unwrap().movement.body,
+            state.actors[ActorId::ALL[id.index() ^ 1].index()]
+                .unwrap()
+                .movement
+                .body,
         ));
     }
     let events = step_match(&mut state, inputs, &PRACTICE_ARENA).unwrap();
-    assert_eq!(events.died, [true; 2]);
-    assert!(events.shots.iter().all(Option::is_some));
+    assert_eq!(events.died[..2], [true; 2]);
+    assert!(events.shots[..2].iter().all(Option::is_some));
     for _ in 1..RESPAWN_TICKS {
         let inputs = commands(&state);
         step_match(&mut state, inputs, &PRACTICE_ARENA).unwrap();
@@ -72,7 +75,7 @@ fn simultaneous_human_shots_kill_both_then_respawn_with_full_state() {
     }
     let inputs = commands(&state);
     let events = step_match(&mut state, inputs, &PRACTICE_ARENA).unwrap();
-    assert_eq!(events.respawned, [true; 2]);
+    assert_eq!(events.respawned[..2], [true; 2]);
     for a in state.actors.iter().flatten() {
         assert_eq!(a.combat.health, 100);
         assert_eq!(a.combat.weapons[0].ammo, 12);
@@ -140,4 +143,18 @@ fn neutral_missing_input_cancels_human_fire_jet_without_pausing_other_actor() {
     assert!(!state.actors[0].unwrap().movement.thrust_latched);
     assert!(events.shots[0].is_none());
     assert!(state.actors[1].unwrap().movement.body.x < before);
+}
+
+// Preserve the original two-human scenarios inside the expanded shared match.
+fn step_match(
+    state: &mut MatchState,
+    pair: [InputCommand; 2],
+    arena: &Arena,
+) -> Result<MatchEvents, TickMismatch> {
+    let mut inputs = [InputCommand {
+        tick: state.tick,
+        ..Default::default()
+    }; MAX_PLAYERS];
+    inputs[..2].copy_from_slice(&pair);
+    burnhop_gameplay_core::step_match(state, inputs, arena)
 }

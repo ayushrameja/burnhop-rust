@@ -1,0 +1,5 @@
+PLAYTEST focus=true tick=0 x=390.00 y=1152.00
+PLAYTEST tick=60 platform underside: PASS (x=390.00, y=1002.00, fuel=72.86)
+PLAYTEST tick=150 floor landing: PASS (x=390.00, y=1152.00, fuel=77.07)
+PLAYTEST focus=false tick=401 x=975.50 y=234.92
+PLAYTEST route canceled (focus lost); keyboard control is available.

@@ -12,4 +12,6 @@
 /build/
 /logs/
 *.log
+# Reviewed, bounded reliability evidence belongs with its handoff.
+!/docs/measurements/08-eight-player/*.log
 .DS_Store

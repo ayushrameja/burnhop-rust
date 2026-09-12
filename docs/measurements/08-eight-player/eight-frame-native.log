@@ -1,0 +1,9 @@
+ONLINE assigned actor=One generation=1 start_tick=45
+ONLINE CONNECTED - Player 1
+ONLINE lifecycle actor=One tick=98 life=Dead { remaining_ticks: 180 } deaths=1
+ONLINE lifecycle actor=One tick=278 life=Alive deaths=1
+ONLINE lifecycle actor=One tick=452 life=Dead { remaining_ticks: 179 } deaths=2
+ONLINE lifecycle actor=One tick=632 life=Alive deaths=2
+ONLINE focus lost: input released; server continues
+FRAME_PROFILE n=1800 mean_ms=11.600 median_ms=8.484 p95_ms=18.101 p99_ms=20.154 over_16_7ms=331
+CLIENT_METRICS reconciliations=667 corrections=0 correction_px_p95=0.000 correction_px_max=0.000 history_peak=8 snapshots=32 lead=6 skipped_slots=5 rtt_ms=16.109

@@ -25,12 +25,13 @@ fn main() -> Result<(), String> {
         Server::bind(address.ok_or("Specify --bind 127.0.0.1:5000 (or an explicit LAN address)")?)?;
     server.diagnostics = diagnostics;
     println!(
-        "Burnhop headless server on {} — 60 Hz, two players, protocol {}",
+        "Burnhop headless server on {} — 60 Hz, eight players, protocol {}",
         server.address(),
         burnhop_protocol::PROTOCOL_VERSION
     );
     let mut clock = ServerClock::default();
     let mut last = Instant::now();
+    let mut last_report = last;
     loop {
         let now = Instant::now();
         let elapsed = now.duration_since(last);
@@ -48,6 +49,26 @@ fn main() -> Result<(), String> {
                 "SERVER overload: dropped {} wall-clock ticks",
                 clock.dropped_ticks - dropped
             );
+        }
+        if diagnostics && now.duration_since(last_report).as_secs_f64() >= 5. {
+            let stats = server.input_stats();
+            println!(
+                "SERVER_METRICS tick={} players={} tick_us_p95={:.3} tick_us_max={:.3} dropped={} accepted={} applied={} missing={} late_redundant_copies={} queue_peak={} snapshot_max={} snapshot_bytes_enqueued={} app_bytes_received={}",
+                server.state.tick,
+                server.player_count(),
+                server.tick_work_us.percentile(0.95),
+                server.tick_work_us.max,
+                clock.dropped_ticks,
+                stats.accepted,
+                stats.applied,
+                stats.missing,
+                stats.late,
+                stats.peak,
+                server.snapshot_max,
+                server.application_sent,
+                server.application_received
+            );
+            last_report = now;
         }
         server.flush();
         std::thread::sleep(Duration::from_millis(1));

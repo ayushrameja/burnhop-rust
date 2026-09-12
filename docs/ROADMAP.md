@@ -43,7 +43,7 @@
 - [ ] Document physical held mouse/Shift, cursor-exit and focus subcases; general approval does not establish each result.
 - [x] Validate GitHub CI and Windows compilation for exact implementation/fix commit `de704556391dae3f58ffa83aba17160691535342`; both jobs pass all 80 tests and locked builds. Later commits require their own CI results.
 - [ ] Validate Windows hardware/GPU and an actual Mac-to-Windows match.
-- [ ] Measure internet latency/loss and frame/server timing on real connections. Eight-player scaling is a later milestone.
+- [ ] Measure internet latency/loss and frame/server timing on real connections. Controlled eight-player results are recorded in milestone 08; real internet validation remains pending.
 
 ## 4. Gameplay visuals — moved ahead of eight-player expansion
 
@@ -62,10 +62,22 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 - [ ] Windows hardware/GPU review.
 - [x] Save approved visuals as `bf34b95bf0f9953b85635b8ec48a645ccfba45a9`; macOS ARM64 and Windows x64 CI passed all 90 tests and locked builds. See [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md). Later commits require their own CI verification.
 
-## 5. Multiplayer expansion — after visual review
+## 5. Eight-player multiplayer and reliability
 
-- [ ] Plan and validate eight-player networking from the approved two-player foundation.
-- [ ] Measure actual internet latency/loss and server/client timing before setting capacity or performance expectations.
+- [x] Record baseline, implementation plan and pass criteria before refactoring from `0a7c7e3`.
+- [x] Eight stable generations, validated separated spawns, shared simultaneous combat and single-credit scoring; preserve approved practice regression.
+- [x] Eight owners, clear ninth-player rejection, bounded lifecycle/queues, fresh replacement state and 60 Hz overload policy.
+- [x] Protocol 2 lossless 1,185-byte snapshots and measured-RTT input scheduling, justified by failed fixed-lead/fragmented experiments.
+- [x] Reuse the pilot rig for all actors; add held Tab scores and bounded per-actor effects/cleanup.
+- [x] Controlled raw UDP baseline, 50/100/150 ms RTT with jitter/loss, one-second client stall/recovery; document precise injection/counter semantics.
+- [x] 605-second eight-client soak: 13 replacement joins, 916 deaths, 906 respawns; no overload and bounded measured resources.
+- [x] Actual Mac native rendering with seven synthetic clients; eight visible pilots, effects, desktop/compact scores, departure/reuse and respawns; offline and two-client regressions.
+- [x] Local 102 tests, formatting, strict Clippy, locked builds and dependency boundaries. Preserve short Mac/Windows CI; long harness stays opt-in.
+- [ ] Human two-to-eight-player spawn fairness, delayed aiming and physical held-input/focus checklist.
+- [x] Manager review reported no blocking issues; fresh checkpoint checks pass all 102 tests, formatting, strict Clippy, locked builds and dependency boundaries.
+- [ ] Complete authorized save and verify exact final SHA on macOS ARM64 and Windows x64 CI; see checkpoint 09.
+- [ ] Windows hardware/GPU and an actual Mac-to-Windows match.
+- [ ] Measure real internet latency/loss and a broader range of hardware before setting capacity/performance expectations.
 
 ## 6. Hosting and Go services
 
@@ -85,4 +97,4 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 
 ## Latest handoff
 
-2026-09-12: [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) records the saved approved visual milestone and passed compact-HUD review, fresh local checks, and successful exact-implementation-commit macOS ARM64 / Windows x64 CI (90 tests and locked builds on each). Gameplay, protocol, server, tuning and pinned dependencies remain unchanged. The documentation commit containing that handoff triggers a separate full CI run, which must be checked by exact SHA before final sign-off. Windows hardware/GPU, Mac-to-Windows multiplayer, unreported physical held-input/focus cases and real internet measurements remain pending. [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) retains native screenshot/playtest evidence and its limits; [05-checkpoint.md](handoffs/05-checkpoint.md) preserves earlier CI history.
+2026-09-12: [09-eight-player-checkpoint.md](handoffs/09-eight-player-checkpoint.md) records the authorized reviewed save, fresh local checks, evidence correction and outstanding validation. [08-eight-player-reliability.md](handoffs/08-eight-player-reliability.md) records the eight-player implementation, protocol/scheduling decisions, controlled packet tests, 605-second soak, actual native review and remaining limits. The checkpoint brief reports manager review with no blocking issues and authorizes normal commit/push; exact final-commit CI must be verified independently. [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) preserves the saved visual/CI baseline; [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) preserves the approved art direction and earlier native evidence. Windows hardware, real internet, eight-human feel and current-change CI remain outstanding.
