@@ -45,7 +45,29 @@
 - [ ] Validate Windows hardware/GPU and an actual Mac-to-Windows match.
 - [ ] Measure internet latency/loss and frame/server timing on real connections. Eight-player scaling is a later milestone.
 
-## 4. Hosting and Go services
+## 4. Gameplay visuals — moved ahead of eight-player expansion
+
+User decision, 2026-09-12: polish the playable scene now; preserve approved movement, combat and two-player networking.
+
+- [x] Inspect actual browser references and the native baseline; record `VISUAL_DIRECTION.md`.
+- [x] Add one shared illustrated pilot rig with idle, run, airborne, jet, aiming, reload, hit and death/respawn presentation.
+- [x] Draw distinct pistol/M416 silhouettes and cosmetic slide/bolt feedback; preserve center-origin rays and clip nearby-cover artwork.
+- [x] Style all existing arena solids with consistent surfaces, landscape depth and an initial-spawn range sign.
+- [x] Pool bounded confirmed effects and clean up presentation across reset, lifecycle, joins and departure.
+- [x] Replace the debug slab with a responsive native combat HUD and useful connection/errors.
+- [x] Verify Mac native rendering, original combat/movement routes, both online roles, resize and focus recovery; retain representative screenshots.
+- [x] Record user-reported completion of the visual playtest and approval of the result (2026-09-12); see the milestone 06 addendum.
+- [x] Address the compact-HUD review finding: short edge readouts, collapsed F1 guidance, and native upper-platform/edge-flight, combat and connection-error checks at minimum, medium and desktop sizes. See milestone 06 follow-up.
+- [x] Compact-HUD fix passed final review, as recorded in the checkpoint brief (2026-09-12); user visual approval, screenshot review and automated checks remain separate evidence.
+- [ ] Windows hardware/GPU review.
+- [ ] Save the approved visual milestone and verify macOS ARM64 / Windows x64 CI for the exact pushed commit (authorized 2026-09-12).
+
+## 5. Multiplayer expansion — after visual review
+
+- [ ] Plan and validate eight-player networking from the approved two-player foundation.
+- [ ] Measure actual internet latency/loss and server/client timing before setting capacity or performance expectations.
+
+## 6. Hosting and Go services
 
 - [ ] Add player-hosted matches and explicit host-departure behavior.
 - [ ] Implement internet connection setup and relay fallback as needed.
@@ -53,13 +75,14 @@
 - [ ] Deploy official match hosting in India when ready and authorized.
 - [ ] Test player hosting from Canadian users' actual connections.
 
-## 5. Expand from playtest evidence
+## 7. Expand from playtest evidence
 
-- [ ] Refine menus, map traversal, spawn fairness, visuals, sound, and animation.
+- [ ] Refine menus, map traversal and spawn fairness from playtests; add audio in a later milestone.
+- [ ] Iterate the first visual scene from user and Windows hardware feedback.
 - [ ] Add additional content and customization incrementally.
 - [ ] Add accounts and persistence when required by a concrete feature.
 - [ ] Establish distribution, updates, and platform packaging.
 
 ## Latest handoff
 
-2026-09-11: Reviewed foundation, movement, combat and two-player multiplayer are saved in the existing repository. User-reported Mac movement/combat approval and successful multiplayer participation/approval are recorded without inferring multiplayer network conditions or unreported physical-input cases. Local formatting, strict Clippy, all 80 tests and locked Mac builds pass. The first Windows CI run exposed a Mac-specific practice trace assumption; a test-only fix now compares every tick against the preserved approved source on each platform, retaining the Mac golden and leaving runtime rules/tuning/dependencies unchanged. Both macOS ARM64 and Windows x64 CI pass all 80 tests and locked executable builds for `de704556391dae3f58ffa83aba17160691535342`. See [05-checkpoint.md](handoffs/05-checkpoint.md) for exact run links, failure/fix history and evidence boundaries. Check each later commit's own CI before sign-off. Remaining work is Windows hardware/GPU, a documented Mac-to-Windows match, physical input subcases and real internet/performance measurements. No hosting, deployment, purchase or agent delegation occurred.
+2026-09-12: User visual/animation approval and the passed compact-HUD review are recorded in [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md). The user separately authorized saving this approved milestone to the existing repository and running CI. Fresh local formatting, strict Clippy, all 90 tests, locked host and explicit Mac target builds, and independent core/server checks pass. The reviewed gameplay/protocol/server, tuning, pinned dependencies and workflow remain unchanged. Exact-commit macOS/Windows CI is pending the authorized push. Windows hardware/GPU, Mac-to-Windows multiplayer, unreported physical held-input/focus cases and real internet measurements remain unverified. [05-checkpoint.md](handoffs/05-checkpoint.md) preserves earlier CI evidence.

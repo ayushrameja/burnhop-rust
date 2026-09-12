@@ -1,7 +1,13 @@
 mod adapter;
+mod artwork;
 mod combat_view;
+mod frame_profile;
+mod hud;
 mod online;
+mod pilot;
 mod playtest;
+mod review;
+mod terrain;
 #[cfg(test)]
 mod tests;
 
@@ -56,15 +62,6 @@ impl Default for Playground {
         }
     }
 }
-#[derive(Component)]
-struct PlayerVisual;
-#[derive(Component)]
-struct JetVisual;
-#[derive(Component)]
-struct HudText;
-#[derive(Component)]
-struct FuelFill;
-
 fn main() {
     let mut game = Playground::default();
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -118,7 +115,7 @@ fn main() {
         "Burnhop — Combat Practice"
     };
     App::new()
-        .insert_resource(ClearColor(Color::srgb(0.055, 0.075, 0.10)))
+        .insert_resource(ClearColor(artwork::color(0x182727)))
         .insert_resource(game)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -134,7 +131,16 @@ fn main() {
             }),
             ..default()
         }))
-        .add_systems(Startup, (setup, combat_view::setup))
+        .add_systems(
+            Startup,
+            (
+                setup,
+                terrain::setup,
+                pilot::setup,
+                combat_view::setup,
+                hud::setup,
+            ),
+        )
         .add_systems(
             Update,
             (
@@ -142,10 +148,15 @@ fn main() {
                 combat_view::capture_aim,
                 simulate,
                 present,
+                terrain::parallax,
+                pilot::present,
                 combat_view::present,
+                hud::present,
+                review::capture,
             )
                 .chain(),
         )
+        .add_systems(Update, frame_profile::record)
         .run();
 }
 
@@ -156,106 +167,8 @@ fn position(rect: Rect, z: f32) -> Vec3 {
         z,
     )
 }
-fn setup(mut commands: Commands, game: Res<Playground>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-    for rect in PRACTICE_ARENA.solids {
-        commands.spawn((
-            Sprite::from_color(
-                Color::srgb(0.25, 0.34, 0.38),
-                Vec2::new(rect.width as f32, rect.height as f32),
-            ),
-            Transform::from_translation(position(*rect, 0.0)),
-        ));
-        // Thin highlight lies on the solid's top, using its actual authored edge.
-        commands.spawn((
-            Sprite::from_color(
-                Color::srgb(0.48, 0.65, 0.65),
-                Vec2::new(rect.width as f32, 3.0),
-            ),
-            Transform::from_xyz(
-                (rect.x + rect.width / 2.0) as f32,
-                -rect.y as f32 - 1.5,
-                0.1,
-            ),
-        ));
-    }
-    let spawn = PRACTICE_ARENA.spawn;
-    commands.spawn((
-        Sprite::from_color(Color::srgb(0.20, 0.78, 0.64), Vec2::new(64.0, 5.0)),
-        Transform::from_xyz(
-            (spawn.x + 18.0) as f32,
-            -PRACTICE_ARENA.floor_y as f32 + 2.5,
-            0.2,
-        ),
-    ));
-    commands.spawn((
-        PlayerVisual,
-        Sprite::from_color(Color::srgb(1.0, 0.39, 0.16), Vec2::new(36.0, 68.0)),
-        Transform::from_translation(position(game.world.player.body, 1.0)),
-    ));
-    commands.spawn((
-        JetVisual,
-        Sprite::from_color(Color::srgb(0.25, 0.85, 1.0), Vec2::new(22.0, 22.0)),
-        Transform::default(),
-        Visibility::Hidden,
-    ));
-    commands
-        .spawn((
-            Node {
-                position_type: PositionType::Absolute,
-                top: px(14),
-                left: px(14),
-                right: px(14),
-                padding: UiRect::all(px(12)),
-                flex_direction: FlexDirection::Column,
-                row_gap: px(6),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.025, 0.04, 0.06, 0.92)),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                Text::new(if game.online.is_some() { "A/D Move   SPACE Jump   SHIFT Jet   Mouse Aim/Fire   R Reload   1/2 Weapon   Close to leave" } else { "A/D Move   SPACE Jump   SHIFT Jet   Mouse Aim/Fire   R Reload   1/2 Weapon   F5 Reset" }),
-                TextFont {
-                    font_size: FontSize::Px(18.0),
-                    ..default()
-                },
-            ));
-            parent.spawn((
-                HudText,
-                Text::default(),
-                TextFont {
-                    font_size: FontSize::Px(16.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.70, 0.88, 0.91)),
-            ));
-            parent
-                .spawn((
-                    Node {
-                        width: px(220),
-                        height: px(8),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.18, 0.25, 0.29)),
-                ))
-                .with_child((
-                    FuelFill,
-                    Node {
-                        width: percent(100),
-                        height: percent(100),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.25, 0.85, 1.0)),
-                ));
-        });
-    if game.online.is_some() {
-        info!("Direct connect: movement predicted locally; combat owned by the headless server.");
-    } else {
-        info!(
-            "Combat practice: 60 Hz shared simulation, R reload / F5 reset. Bot fires once per second after 3 seconds grace."
-        );
-    }
 }
 
 fn capture_input(
@@ -470,40 +383,17 @@ fn simulate(mut game: ResMut<Playground>, time: Res<Time<Real>>) {
     }
 }
 
-// Disjoint component filters make the transform borrows explicit to Bevy.
-type PlayerFilter = (With<PlayerVisual>, Without<JetVisual>, Without<Camera2d>);
-type JetFilter = (With<JetVisual>, Without<PlayerVisual>, Without<Camera2d>);
-type CameraFilter = (With<Camera2d>, Without<PlayerVisual>, Without<JetVisual>);
-#[allow(clippy::too_many_arguments)]
 fn present(
     mut game: ResMut<Playground>,
     time: Res<Time<Real>>,
     window: Single<&Window, With<PrimaryWindow>>,
-    mut player: Single<(&mut Transform, &mut Sprite), PlayerFilter>,
-    mut jet: Single<(&mut Transform, &mut Visibility), JetFilter>,
-    mut camera: Single<(&mut Transform, &mut Projection), CameraFilter>,
-    mut text: Single<&mut Text, With<HudText>>,
-    mut fuel: Single<&mut Node, With<FuelFill>>,
+    mut camera: Single<(&mut Transform, &mut Projection), With<Camera2d>>,
 ) {
     let p = game.world.player;
     let a = game.alpha;
     let mut rect = p.body;
     rect.x = game.previous.body.x + (p.body.x - game.previous.body.x) * a;
     rect.y = game.previous.body.y + (p.body.y - game.previous.body.y) * a;
-    player.0.translation = position(rect, 1.0);
-    player.1.color = if !game.combat.player.alive() {
-        Color::srgba(0.35, 0.35, 0.38, 0.35)
-    } else if game.feedback.player_hit > 0.0 {
-        Color::WHITE
-    } else {
-        Color::srgb(1.0, 0.39, 0.16)
-    };
-    jet.0.translation = player.0.translation + Vec3::new(0.0, -45.0, -0.1);
-    *jet.1 = if p.thrusting && game.focused && game.combat.player.alive() {
-        Visibility::Visible
-    } else {
-        Visibility::Hidden
-    };
     let arena = PRACTICE_ARENA;
     let (width, height) = view_size(
         window.width() as f64,
@@ -548,26 +438,4 @@ fn present(
     camera.0.translation.x = x as f32;
     camera.0.translation.y = -y as f32;
     game.snap_camera = false;
-    let status = if game.online.as_ref().is_some_and(|online| online.scripted()) {
-        "SCRIPTED ONLINE INPUT - any key cancels"
-    } else if game.route.as_ref().is_some_and(|route| !route.complete)
-        || game
-            .combat_route
-            .as_ref()
-            .is_some_and(|route| !route.complete)
-    {
-        "SCRIPT RUNNING - any key cancels"
-    } else if !game.focused && game.online.is_some() {
-        "UNFOCUSED - input cleared, match continues"
-    } else if !game.focused {
-        "PAUSED - click window, then press controls again"
-    } else if p.thrusting {
-        "THRUST"
-    } else if p.grounded {
-        "GROUNDED"
-    } else {
-        "AIRBORNE"
-    };
-    text.0 = combat_view::hud(&game, status);
-    fuel.width = percent(p.fuel as f32);
 }

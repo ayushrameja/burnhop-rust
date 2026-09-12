@@ -1,69 +1,130 @@
-//! Presentation only: the core's confirmed events drive every tracer and flash.
-use crate::{Playground, position};
-use bevy::{prelude::*, window::PrimaryWindow};
-use burnhop_gameplay_core::{
-    self as core, ActorId, CombatEvents, Impact, LifeState, Reserve, Shot,
+//! Bounded, reused render slots driven exclusively by confirmed combat events.
+use crate::{
+    Playground,
+    artwork::{CREAM, OCHRE, color},
 };
-
-#[derive(Default)]
+use bevy::{prelude::*, window::PrimaryWindow};
+use burnhop_gameplay_core::{self as core, ActorId, CombatEvents, Impact, Shot};
+const MAX_SHOTS: usize = 24;
+const EFFECT_LIFE: f32 = 0.18;
 pub struct Feedback {
     pub player_hit: f32,
     bot_hit: f32,
     traces: Vec<(Shot, f32)>,
     pending: Vec<Shot>,
+    pub epoch: u64,
+}
+impl Default for Feedback {
+    fn default() -> Self {
+        Self {
+            player_hit: 0.,
+            bot_hit: 0.,
+            traces: Vec::with_capacity(MAX_SHOTS),
+            pending: Vec::with_capacity(MAX_SHOTS),
+            epoch: 0,
+        }
+    }
 }
 impl Feedback {
+    pub fn has_terrain_impact(&self) -> bool {
+        self.traces
+            .iter()
+            .any(|(s, ttl)| s.impact == Impact::Terrain && *ttl > 0.13)
+    }
+    pub fn has_shot(&self, weapon: core::WeaponId) -> bool {
+        self.traces
+            .iter()
+            .any(|(s, ttl)| s.shooter == ActorId::One && s.weapon == weapon && *ttl > 0.13)
+    }
+    pub fn kick(&self, actor: usize) -> f32 {
+        self.traces
+            .iter()
+            .filter(|(s, _)| s.shooter.index() == actor)
+            .map(|(_, ttl)| ((ttl - 0.10) / 0.08).max(0.) * 1.5)
+            .fold(0., f32::max)
+    }
+    pub fn hit(&self, actor: usize) -> f32 {
+        if actor == 0 {
+            self.player_hit
+        } else {
+            self.bot_hit
+        }
+    }
+    pub fn clear_actor(&mut self, actor: ActorId) {
+        self.traces.retain(|(s, _)| {
+            s.shooter != actor && !matches!(s.impact,Impact::Body(id) if id==actor)
+        });
+        self.pending
+            .retain(|s| s.shooter != actor && !matches!(s.impact,Impact::Body(id) if id==actor));
+        if actor == ActorId::One {
+            self.player_hit = 0.;
+        } else {
+            self.bot_hit = 0.;
+        }
+    }
     pub fn record(&mut self, events: &CombatEvents) {
         if events.movement.reset {
-            *self = Self::default();
+            let epoch = self.epoch.wrapping_add(1);
+            *self = Self { epoch, ..default() };
         }
-        if events.player_respawned {
-            self.player_hit = 0.0;
+        if events.player_respawned || events.player_died {
+            self.clear_actor(ActorId::One);
         }
-        if events.bot_respawned {
-            self.bot_hit = 0.0;
+        if events.bot_respawned || events.bot_died {
+            self.clear_actor(ActorId::Two);
         }
         for &shot in events.shots.iter().flatten() {
             match shot.impact {
-                Impact::Body(ActorId::One) => self.player_hit = 0.16,
-                Impact::Body(ActorId::Two) => self.bot_hit = 0.16,
+                Impact::Body(ActorId::One) => self.player_hit = 0.12,
+                Impact::Body(ActorId::Two) => self.bot_hit = 0.12,
                 _ => {}
             }
-            self.pending.push(shot);
+            if self.pending.len() < MAX_SHOTS {
+                self.pending.push(shot);
+            }
+        }
+    }
+    fn advance(&mut self, dt: f32) {
+        self.player_hit = (self.player_hit - dt).max(0.);
+        self.bot_hit = (self.bot_hit - dt).max(0.);
+        for (_, ttl) in &mut self.traces {
+            *ttl -= dt;
+        }
+        self.traces.retain(|(_, ttl)| *ttl > 0.);
+        for shot in self.pending.drain(..) {
+            if self.traces.len() == MAX_SHOTS {
+                self.traces.remove(0);
+            }
+            self.traces.push((shot, EFFECT_LIFE));
         }
     }
 }
 #[derive(Component)]
-pub(super) enum CombatVisual {
-    Bot,
-    Barrel(ActorId),
-    BotHealth,
+pub struct Effect {
+    slot: usize,
+    part: usize,
 }
 #[derive(Component)]
-pub(super) struct Trace;
-#[derive(Component)]
-pub(super) struct Reticle;
-
+pub struct Reticle;
+type ReticleFilter = (With<Reticle>, Without<Effect>);
 pub fn setup(mut commands: Commands) {
-    for visual in [
-        CombatVisual::Bot,
-        CombatVisual::Barrel(ActorId::One),
-        CombatVisual::Barrel(ActorId::Two),
-        CombatVisual::BotHealth,
-    ] {
-        commands.spawn((
-            visual,
-            Sprite::from_color(Color::WHITE, Vec2::ONE),
-            Transform::default(),
-        ));
+    for slot in 0..MAX_SHOTS {
+        for part in 0..5 {
+            commands.spawn((
+                Effect { slot, part },
+                Sprite::from_color(Color::WHITE, Vec2::ONE),
+                Transform::default(),
+                Visibility::Hidden,
+            ));
+        }
     }
     commands
         .spawn((
             Reticle,
             Node {
                 position_type: PositionType::Absolute,
-                width: px(16),
-                height: px(16),
+                width: px(18),
+                height: px(18),
                 ..default()
             },
             Visibility::Hidden,
@@ -71,10 +132,10 @@ pub fn setup(mut commands: Commands) {
         ))
         .with_children(|parent| {
             for (x, y, w, h) in [
-                (0., 7., 5., 2.),
-                (11., 7., 5., 2.),
-                (7., 0., 2., 5.),
-                (7., 11., 2., 5.),
+                (0., 8., 5., 2.),
+                (13., 8., 5., 2.),
+                (8., 0., 2., 5.),
+                (8., 13., 2., 5.),
             ] {
                 parent.spawn((
                     Node {
@@ -85,7 +146,7 @@ pub fn setup(mut commands: Commands) {
                         height: px(h),
                         ..default()
                     },
-                    BackgroundColor(Color::WHITE),
+                    BackgroundColor(color(CREAM)),
                 ));
             }
         });
@@ -139,201 +200,129 @@ pub fn capture_aim(
     }
     game.input.aim_at = point;
 }
-pub fn hud(game: &Playground, movement: &str) -> String {
-    let player = &game.combat.player;
-    let w = player.weapon();
-    let reserve = match w.reserve {
-        Reserve::Rounds(n) => n.to_string(),
-        Reserve::Unlimited => "unlimited".into(),
-    };
-    let weapon_status = if !player.alive() {
-        "INACTIVE".into()
-    } else if w.reload_ticks > 0 {
-        format!("RELOADING {:.1}s", f32::from(w.reload_ticks) / 60.)
-    } else if player.equip_ticks > 0 {
-        "EQUIPPING".into()
-    } else if w.ammo == 0 {
-        if w.reserve == Reserve::Rounds(0) {
-            if game.online.is_some() {
-                "EMPTY - switch weapon".into()
-            } else {
-                "EMPTY - switch or F5".into()
-            }
-        } else {
-            "EMPTY - press R".into()
-        }
-    } else {
-        "READY".into()
-    };
-    let life = match player.life {
-        LifeState::Alive => format!("HP {}/100", player.health),
-        LifeState::Dead { remaining_ticks } => {
-            format!("DOWN - respawn {:.1}s", f32::from(remaining_ticks) / 60.)
-        }
-    };
-    let bot = if let Some(online) = &game.online {
-        if online.remote_present {
-            match game.combat.bot.life {
-                LifeState::Alive => format!("Opponent HP {}", game.combat.bot.health),
-                LifeState::Dead { remaining_ticks } => format!(
-                    "Opponent down - respawn {:.1}s",
-                    f32::from(remaining_ticks) / 60.
-                ),
-            }
-        } else {
-            "Waiting for opponent".into()
-        }
-    } else {
-        match game.combat.bot.life {
-            LifeState::Dead { remaining_ticks } => {
-                format!("Bot respawn {:.1}s", f32::from(remaining_ticks) / 60.)
-            }
-            LifeState::Alive => {
-                if game.combat.bot_attack_ticks > 60 {
-                    format!(
-                        "Bot HP {} - grace {:.1}s",
-                        game.combat.bot.health,
-                        f32::from(game.combat.bot_attack_ticks) / 60.
-                    )
-                } else {
-                    format!("Bot HP {} - 1 shot/sec in sight", game.combat.bot.health)
-                }
-            }
-        }
-    };
-    let connection = game
-        .online
-        .as_ref()
-        .map_or(String::new(), |online| format!("{}\n", online.label()));
-    format!(
-        "{connection}{life}   |   {}  {} / {}   |   {weapon_status}\nFuel {:3.0}%   |   {movement}\n{bot}   |   Kills {} / Deaths {}",
-        w.id.tuning().name,
-        w.ammo,
-        reserve,
-        game.world.player.fuel,
-        game.combat.kills,
-        game.combat.deaths
-    )
-}
-#[allow(clippy::too_many_arguments)]
 pub fn present(
-    mut commands: Commands,
     mut game: ResMut<Playground>,
     time: Res<Time<Real>>,
     window: Single<&Window, With<PrimaryWindow>>,
-    mut visuals: Query<(&CombatVisual, &mut Transform, &mut Sprite)>,
-    old: Query<Entity, With<Trace>>,
-    mut reticle: Single<(&mut Node, &mut Visibility), With<Reticle>>,
+    mut effects: Query<(&Effect, &mut Sprite, &mut Transform, &mut Visibility)>,
+    mut reticle: Single<(&mut Node, &mut Visibility), ReticleFilter>,
 ) {
     let dt = if game.focused || game.online.is_some() {
         time.delta_secs().min(0.1)
     } else {
-        0.0
+        0.
     };
-    let feedback = &mut game.feedback;
-    feedback.player_hit = (feedback.player_hit - dt).max(0.0);
-    feedback.bot_hit = (feedback.bot_hit - dt).max(0.0);
-    for (_, ttl) in &mut feedback.traces {
-        *ttl -= dt;
-    }
-    feedback.traces.retain(|(_, ttl)| *ttl > 0.0);
-    feedback
-        .traces
-        .extend(feedback.pending.drain(..).map(|shot| (shot, 0.09)));
-    for entity in &old {
-        commands.entity(entity).despawn();
-    }
-    for (shot, _) in &feedback.traces {
+    game.feedback.advance(dt);
+    for (effect, mut sprite, mut t, mut visible) in &mut effects {
+        *visible = Visibility::Hidden;
+        let Some((shot, ttl)) = game.feedback.traces.get(effect.slot) else {
+            continue;
+        };
+        let age = EFFECT_LIFE - ttl;
         let from = Vec2::new(shot.origin.x as f32, -shot.origin.y as f32);
         let to = Vec2::new(shot.end.x as f32, -shot.end.y as f32);
         let ray = to - from;
-        let color = if shot.shooter == ActorId::One {
-            Color::srgb(1., 0.86, 0.35)
+        let unit = ray.normalize_or_zero();
+        let hue = color(if shot.shooter == ActorId::One {
+            CREAM
         } else {
-            Color::srgb(1., 0.32, 0.36)
-        };
-        commands.spawn((
-            Trace,
-            Sprite::from_color(color, Vec2::new(ray.length().max(1.), 2.)),
-            Transform::from_translation(((from + to) / 2.).extend(3.))
-                .with_rotation(Quat::from_rotation_z(ray.y.atan2(ray.x))),
-        ));
-        if shot.impact != Impact::Range {
-            commands.spawn((
-                Trace,
-                Sprite::from_color(
-                    if shot.damage > 0 { Color::WHITE } else { color },
-                    Vec2::splat(if shot.damage > 0 { 12. } else { 6. }),
-                ),
-                Transform::from_translation(to.extend(3.1)),
-            ));
-        }
-    }
-    let mut player_body = game.world.player.body;
-    player_body.x = game.previous.body.x + (player_body.x - game.previous.body.x) * game.alpha;
-    player_body.y = game.previous.body.y + (player_body.y - game.previous.body.y) * game.alpha;
-    for (visual, mut transform, mut sprite) in &mut visuals {
-        let remote_visual = !matches!(visual, CombatVisual::Barrel(ActorId::One));
-        if remote_visual
-            && game
-                .online
-                .as_ref()
-                .is_some_and(|online| !online.remote_present)
-        {
-            sprite.color = Color::NONE;
-            continue;
-        }
-        match visual {
-            CombatVisual::Bot => {
-                transform.translation = position(game.combat.bot_body, 1.);
-                sprite.custom_size = Some(Vec2::new(36., 68.));
-                sprite.color = if !game.combat.bot.alive() {
-                    Color::srgba(0.35, 0.35, 0.38, 0.35)
-                } else if game.feedback.bot_hit > 0. {
-                    Color::WHITE
-                } else {
-                    Color::srgb(0.82, 0.25, 0.40)
-                };
+            OCHRE
+        });
+        t.scale = Vec3::ONE;
+        sprite.color = hue.with_alpha((ttl / EFFECT_LIFE).min(0.85));
+        match effect.part {
+            0 if age < 0.085 => {
+                t.translation = ((from + to) * 0.5).extend(3.);
+                t.rotation = Quat::from_rotation_z(ray.y.atan2(ray.x));
+                sprite.custom_size = Some(Vec2::new(ray.length().max(0.1), 1.2));
             }
-            CombatVisual::Barrel(id) => {
-                let (actor, body) = if *id == ActorId::One {
-                    (&game.combat.player, player_body)
-                } else {
-                    (&game.combat.bot, game.combat.bot_body)
-                };
-                let aim = Vec2::new(actor.aim.x as f32, -actor.aim.y as f32);
-                let length = actor.selected.tuning().barrel as f32 + 12.;
-                transform.translation = position(body, 2.) + (aim * length / 2.).extend(0.);
-                transform.rotation = Quat::from_rotation_z(aim.y.atan2(aim.x));
-                sprite.custom_size = Some(Vec2::new(length, 6.));
-                sprite.color = if actor.alive() {
-                    Color::srgb(0.89, 0.91, 0.86)
-                } else {
-                    Color::NONE
-                };
+            // Origin flash fits strictly within the confirmed segment, even when
+            // the origin is touching cover. It never jumps to a decorative muzzle.
+            1 if age < 0.045 && ray.length() > 0.5 => {
+                let len = ray.length().min(7.);
+                t.translation = (from + unit * len * 0.5).extend(3.1);
+                t.rotation = Quat::from_rotation_z(ray.y.atan2(ray.x));
+                sprite.custom_size = Some(Vec2::new(len, 3.));
+                sprite.color = color(CREAM);
             }
-            CombatVisual::BotHealth => {
-                let body = game.combat.bot_body;
-                let width = 48. * f32::from(game.combat.bot.health) / 100.;
-                transform.translation = Vec3::new(
-                    body.x as f32 + 18. - (48. - width) / 2.,
-                    -body.y as f32 + 12.,
-                    2.,
-                );
-                sprite.custom_size = Some(Vec2::new(width, 4.));
-                sprite.color = Color::srgb(0.96, 0.45, 0.54);
+            2..=4 if shot.impact != Impact::Range => {
+                let branch = effect.part as f32 - 3.;
+                let normal = Vec2::new(-unit.y, unit.x);
+                let offset = -unit * (age * 26. + 1.) + normal * branch * age * 30.;
+                t.translation = (to + offset).extend(3.2);
+                t.rotation = Quat::from_rotation_z(branch * 0.8 + ray.y.atan2(ray.x));
+                sprite.custom_size = Some(Vec2::new(if shot.damage > 0 { 3. } else { 2. }, 1.));
             }
+            _ => continue,
         }
+        *visible = Visibility::Visible;
     }
     if game.focused
         && game.input.aim_at.is_some()
         && game.combat.player.alive()
         && let Some(cursor) = window.cursor_position()
     {
-        reticle.0.left = px(cursor.x - 8.);
-        reticle.0.top = px(cursor.y - 8.);
+        reticle.0.left = px(cursor.x - 9.);
+        reticle.0.top = px(cursor.y - 9.);
         *reticle.1 = Visibility::Visible;
     } else {
         *reticle.1 = Visibility::Hidden;
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn shot() -> Shot {
+        Shot {
+            shooter: ActorId::One,
+            weapon: core::WeaponId::Pistol,
+            origin: core::Vec2 { x: 1., y: 1. },
+            end: core::Vec2 { x: 20., y: 1. },
+            impact: Impact::Body(ActorId::Two),
+            damage: 18,
+        }
+    }
+    #[test]
+    fn sustained_batches_remain_bounded_and_expire() {
+        let mut f = Feedback::default();
+        let e = CombatEvents {
+            shots: [Some(shot()); 2],
+            ..default()
+        };
+        for _ in 0..1000 {
+            f.record(&e);
+        }
+        assert_eq!(f.pending.len(), MAX_SHOTS);
+        for _ in 0..100 {
+            f.record(&e);
+            f.advance(0.001);
+            assert!(f.traces.len() <= MAX_SHOTS);
+        }
+        f.advance(EFFECT_LIFE + 0.1);
+        assert!(f.traces.is_empty());
+    }
+    #[test]
+    fn lifecycle_clears_pending_active_hits_and_reset_epoch() {
+        let mut f = Feedback::default();
+        f.record(&CombatEvents {
+            shots: [Some(shot()), None],
+            ..default()
+        });
+        f.advance(0.);
+        f.record(&CombatEvents {
+            shots: [Some(shot()), None],
+            ..default()
+        });
+        f.clear_actor(ActorId::Two);
+        assert!(f.pending.is_empty() && f.traces.is_empty());
+        assert_eq!(f.bot_hit, 0.);
+        f.record(&CombatEvents {
+            movement: core::StepEvents {
+                reset: true,
+                ..default()
+            },
+            ..default()
+        });
+        assert_eq!(f.epoch, 1);
     }
 }

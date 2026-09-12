@@ -8,6 +8,8 @@ pub struct Online {
     pub network: NetworkClient,
     pub prediction: Option<Prediction>,
     pub remote_present: bool,
+    pub remote_movement: Option<Player>,
+    pub remote_generation: u64,
     snapshot_age: f64,
     was_focused: bool,
     script: Option<NativeRoute>,
@@ -19,6 +21,8 @@ impl Online {
             network: NetworkClient::connect(address, bytes)?,
             prediction: None,
             remote_present: false,
+            remote_movement: None,
+            remote_generation: 0,
             snapshot_age: 0.,
             was_focused: true,
             script: script.then(NativeRoute::default),
@@ -166,6 +170,10 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
             let render_tick = snapshot.state.tick as f64 + (online.snapshot_age * 60.).min(6.) - 6.;
             let remote = prediction.remote_at(render_tick);
             online.remote_present = remote.is_some();
+            online.remote_movement = remote.map(|actor| actor.movement);
+            if let Some(actor) = remote {
+                online.remote_generation = actor.generation;
+            }
             if let Some(remote) = remote {
                 game.combat.bot = remote.combat;
                 game.combat.bot_body = remote.movement.body;
@@ -178,6 +186,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
     }
     if online.network.status.terminal() {
         online.remote_present = false;
+        online.remote_movement = None;
         game.input.clear();
         game.feedback = Default::default();
         if let Some(prediction) = &mut online.prediction {
@@ -212,7 +221,7 @@ impl NativeRoute {
         if local.kills >= 1 && local.deaths >= 1 && local.combat.alive() && remote.combat.alive() {
             self.complete = true;
             println!(
-                "ONLINE PLAYTEST COMPLETE actor={:?}: movement, fire, kill, death, respawn through real UDP; injected input",
+                "ONLINE PLAYTEST COMPLETE actor={:?}: movement, jump, jet, fire, kill, death, respawn through real UDP; injected input",
                 local.id
             );
             return InputCommand {
@@ -232,6 +241,10 @@ impl NativeRoute {
         if self.ticks == 110 {
             command.jump_pressed = true;
         }
+        // Visual smoke coverage: a short jet pulse through ordinary input.
+        // This opt-in route does not alter live controls or simulation rules.
+        command.jet_pressed = self.ticks == 120;
+        command.jet_held = (120..150).contains(&self.ticks);
         if self.ticks > 210 {
             command.select_weapon = Some(WeaponId::M416);
             command.aim_at = Some(body_center(remote.movement.body));

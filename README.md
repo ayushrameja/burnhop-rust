@@ -1,8 +1,8 @@
 # Burnhop Native
 
-A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. Graphics are placeholders. A two-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
+A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. The field range now has an illustrated articulated pilot, distinct weapon artwork, layered terrain, bounded combat effects and a responsive native HUD. A two-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
 
-Read the latest [checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
+Read the latest [gameplay visuals handoff](docs/handoffs/06-gameplay-visuals.md), [visual direction](docs/VISUAL_DIRECTION.md), [saved checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
 
 ## Pinned versions and choices
 
@@ -59,7 +59,7 @@ cargo run -p burnhop-client --locked -- --connect 127.0.0.1:5000
 
 These commands also work in separate PowerShell terminals on Windows after the setup above; Windows compilation and headless tests have passed in CI; interactive Windows execution is still unverified. On an already reachable LAN, bind an explicit interface address (for example `--bind 192.168.1.20:5000`) and pass that same server address to each client. Numeric IP addresses with ports are required; IPv6 uses `[address]:port`. The recorded agent transport checks exercised localhost; the user-reported multiplayer approval does not specify network conditions. No automatic firewall changes, NAT traversal, relay, room discovery or deployment is included. This uses Netcode's unsecure development authentication; it is a trusted direct-connect milestone, not authenticated public hosting.
 
-Both clients need the same protocol and gameplay versions. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. You are orange; the opponent is red. There is no online bot. Close a client to leave; a new process can join the freed slot. A disconnected client must be restarted to join again. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
+Both clients need the same protocol and gameplay versions. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. Your pilot has cyan equipment and a YOU label; the opponent has ochre equipment and a RIVAL label. There is no online bot. Close a client to leave; a new process can join the freed slot. A disconnected client must be restarted to join again. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
 
 Offline practice remains the default, or can be selected explicitly:
 
@@ -67,7 +67,7 @@ Offline practice remains the default, or can be selected explicitly:
 cargo run -p burnhop-client --locked -- --offline
 ```
 
-To reproduce the native multiplayer smoke route, add `--online-playtest` to **both** client commands. Once both join, each moves/jumps, fires, kills, dies and respawns using real UDP traffic and the shared authoritative rules. Watch for `ONLINE PLAYTEST COMPLETE` in both terminals. These are actual rendered clients with **injected commands**, including background input for this explicit test mode; this is not a human playtest. A key/click cancels the route. The ordinary mode clears input when unfocused. Add `--diagnostics` to the server command to log joins, leaves, confirmed combat and overload.
+To reproduce the native multiplayer smoke route, add `--online-playtest` to **both** client commands. Once both join, each moves/jumps/jets, fires, kills, dies and respawns using real UDP traffic and the shared authoritative rules. Watch for `ONLINE PLAYTEST COMPLETE` in both terminals. These are actual rendered clients with **injected commands**, including background input for this explicit test mode; this is not a human playtest. A key/click cancels the route. The ordinary mode clears input when unfocused. Add `--diagnostics` to the server command to log joins, leaves, confirmed combat and overload.
 
 The first protocol uses six ticks of input lead and six ticks of remote display delay, with no hit rewind. High latency, loss or stalls can produce corrections and missed short actions. See the [multiplayer handoff](docs/handoffs/04-multiplayer.md) for exact scheduling, bounds, delivery rules, known limits and the short human checklist.
 
@@ -86,7 +86,7 @@ The first protocol uses six ticks of input lead and six ticks of remote display 
 
 Space never activates the jet in this milestone. Holding Space does not repeat jumps. Shift must be released and pressed again after landing or exhaustion; regenerated fuel does not restart a held jet. Both Shift keys share one hold. Losing focus pauses the encounter and clears held/queued input; click back into the window and press controls again. Leaving the window with the cursor stops firing; click again after returning. Invalid cursor positions cannot shoot. Death and respawn also clear controls. Resize freely; the arena/collision dimensions never change.
 
-The teal floor mark is player spawn. The red bot stands at the browser target spawn and fires a pistol once per second while you are alive, visible and within range. It waits three seconds after reset or either respawn; it also reloads. Both actors have 100 HP and respawn after three seconds. Your pistol starts with 12 + 48 rounds; M416 starts with 30 + 120. F5 or player respawn refills both. Shots lose damage with distance, stop at terrain, and cannot hit the shooter.
+The cyan floor mark is player spawn. The ochre-labelled bot stands at the browser target spawn and fires a pistol once per second while you are alive, visible and within range. It waits three seconds after reset or either respawn; it also reloads. Both actors have 100 HP and respawn after three seconds. Your pistol starts with 12 + 48 rounds; M416 starts with 30 + 120. F5 or player respawn refills both. Shots lose damage with distance, stop at terrain, and cannot hit the shooter.
 
 Jump alone rises about 86 world pixels; the first platform is 260 pixels above the floor, so use the jet and steer around platform edges. Platforms are solid on every side.
 
@@ -130,7 +130,7 @@ The tree should contain only `burnhop-gameplay-core`. For an explicit platform b
 ## Layout and boundary
 
 ```text
-crates/client/          Bevy device input, offline/online adapter, camera and HUD
+crates/client/          Bevy input/adapter, articulated artwork, terrain, camera, effects and HUD
 crates/gameplay-core/   Dependency-free actors, movement/combat, 60 Hz ticks and collision
 crates/protocol/        Wire codec, bounded input queues, prediction and Renet client adapter
 crates/server/          Headless authoritative match and bounded server clock
@@ -143,3 +143,23 @@ The core has zero dependencies, no Bevy types, and no clocks or networking. `Mat
 `.github/workflows/build.yml` installs the pinned toolchain and runs formatting, Clippy, tests, and executable builds on Apple Silicon `macos-14` and x64 `windows-2022` runners. These labels are listed in [GitHub's official runner images](https://github.com/actions/runner-images). CI does not open a window or establish game feel/GPU performance. Both jobs passed for regression-fix commit `de704556391dae3f58ffa83aba17160691535342`, including all 80 tests and locked executable builds. See the [CI run](https://github.com/ayushrameja/burnhop-rust/actions/runs/34618663757) and [checkpoint handoff](docs/handoffs/05-checkpoint.md) for exact commit evidence and the earlier Windows test-baseline correction. Check the current commit's own Actions status when validating a later checkout.
 
 The browser project at `../burnhop` is a read-only reference and is not required to run this client. Remote: `git@github.com:ayushrameja/burnhop-rust.git`. The user reports that the prior Mac movement and controls feel correct with placeholders; this is user-reported approval. The user also reports approving Mac combat feel. The user also reports participating in a successful two-player multiplayer playtest and approving that milestone; no network conditions, platforms or individual physical-input checks are inferred. Milestone 4 separately records automated transport, actual two-native-client UDP and offline regression verification. GitHub CI has now verified compilation, all 80 tests and locked executable builds on macOS ARM64 and Windows x64 for the linked fix commit. This does not establish Windows hardware/GPU playtesting. Next: document Windows hardware/GPU, Mac-to-Windows and real internet validation separately, including unreported physical held-input/focus cases.
+
+## Gameplay visuals and review
+
+The pilot's head, field cap, armor, connected limbs, boots, pack and two weapons come from one original polygon atlas generated once at startup. Practice and online share the same rig. Gait follows actual displacement; jet boots follow each actor's movement state. Reload, hit, death and respawn presentation follow confirmed state/events. The approved 36 × 68 body, arena, camera, controls and weapon rules are unchanged. Nearby terrain clips weapon art while confirmed rays keep their exact origin and endpoint.
+
+Health and fuel are at the lower left; selected weapon, magazine/reserve and reload/equip state are at the lower right. Below 1050 logical pixels wide, these move above the action to avoid covering pilots. Important states use text and numbers as well as color. The 480 × 320 minimum remains supported. Full menus, settings, Host/Join flows and audio are deferred. Visual work precedes eight-player expansion by explicit user decision.
+
+For an optional local frame-interval sample (180 warmup frames, 1800 measured frames), run on macOS:
+
+```sh
+BURNHOP_FRAME_PROFILE=1 cargo run -p burnhop-client --locked -- --offline
+```
+
+This reports real frame intervals, including VSync and scheduling; it does not measure GPU pass time or establish a performance target. Leave the window at 1280 × 720, focused, with no input. Do not enable screenshot capture during the sample. The handoff records before/after observations and their limits.
+
+At compact window sizes, press **F1** to reveal or hide controls. Health/fuel and weapon/ammo stay in short corner readouts; full connection failures remain in the central message.
+
+Optional native evidence capture uses `BURNHOP_CAPTURE_DIR=/absolute/local/path` with an existing playtest command. It captures a bounded set of state transitions and up to 20 F9 snapshots as lossless PPM files without adding encoder dependencies. Keep this directory outside source control; only selected compressed PNG review images belong in `docs/screenshots/06-gameplay-visuals/`. This environment variable and F9 are inspection aids, not a user-facing photo mode.
+
+The user reports completing the visual playtest and approving the result on 2026-09-12. The approval, visual-milestone evidence and remaining Windows/individual-input checks are recorded in [06-gameplay-visuals.md](docs/handoffs/06-gameplay-visuals.md). Prior CI results above apply to their linked commits; exact-commit macOS/Windows CI for this visual milestone is pending the authorized checkpoint push.

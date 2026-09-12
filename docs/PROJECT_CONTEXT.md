@@ -1,6 +1,6 @@
 # Project context
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Why this exists
 
@@ -65,6 +65,14 @@ Internet hosting requires connection establishment through NAT/firewalls and pot
 - The user created the remote repository `git@github.com:ayushrameja/burnhop-rust.git` and authorized syncing this local project to it.
 - The working directory name is `burnhop-native`; the public game name need not change.
 
+- The user moved a focused gameplay-visual milestone ahead of eight-player networking (2026-09-12). Preserve the approved simulation/protocol and existing arena; prioritize the illustrated pilot, animations, weapons, terrain, effects and native HUD. Full menus, customization, audio and additional maps remain deferred. See `VISUAL_DIRECTION.md` and `handoffs/06-gameplay-visuals.md`. No purchase, deployment, commit, push or agents are authorized in this milestone.
+
+- The user reports completing the gameplay visual playtest and says the result looks good (2026-09-12). Record milestone 06 as user-reported visual/animation approval and preserve it as the baseline. Platform, offline/online mode and individual input/checklist results were not specified; Windows and unreported physical-input checks remain separate. See the approval addendum in `handoffs/06-gameplay-visuals.md`.
+
 ## How to resume
 
-Read this file, the roadmap and `docs/handoffs/05-checkpoint.md` for the saved milestone/CI checkpoint. Inspect the existing game's movement and map boundaries as needed. The movement milestone implements one arena, a controllable character, jump/jet fuel, rectangular collision, camera and behavior tests. Read `docs/handoffs/04-multiplayer.md` for the direct-connect architecture, actual Mac checks and remaining human/platform checks; `03-combat.md` records the approved practice combat loop; `02-movement.md` records the user's movement approval and earlier evidence. Read `docs/REFERENCE_GAMEPLAY.md` before porting tuning or map data. Do not start with a complete account system or a full port of all cosmetics.
+Read this file, the roadmap, `docs/handoffs/06-gameplay-visuals.md` and `docs/handoffs/05-checkpoint.md` for the saved milestone/CI checkpoint. Inspect the existing game's movement and map boundaries as needed. The movement milestone implements one arena, a controllable character, jump/jet fuel, rectangular collision, camera and behavior tests. Read `docs/handoffs/04-multiplayer.md` for the direct-connect architecture, actual Mac checks and remaining human/platform checks; `03-combat.md` records the approved practice combat loop; `02-movement.md` records the user's movement approval and earlier evidence. Read `docs/REFERENCE_GAMEPLAY.md` before porting tuning or map data. Do not start with a complete account system or a full port of all cosmetics.
+
+- Compact-HUD review follow-up (2026-09-12): remove the wide `top=82` compact panels, retain short corner readouts and a collapsed F1 guide, and verify actual native traversal/errors at 480 × 320, 800 × 524 and 1280 × 720. This is a HUD-only correction to the approved visual/animation baseline. Final review and separately authorized save/CI come next; no commit or push is authorized here. See the follow-up in milestone 06.
+
+- Visual save checkpoint (2026-09-12): the compact-HUD finding passed review according to the current brief. The user now explicitly authorizes committing/pushing this approved milestone and verifying GitHub Actions, superseding earlier task-specific save restrictions. Fresh local formatting, strict Clippy, 90 tests, locked host/explicit Mac builds and dependency-boundary checks pass. Exact pushed-commit CI remains pending; hardware/internet evidence is unchanged. Preserve the approved visuals and gameplay; do not begin eight-player work as part of saving this checkpoint.
