@@ -1,0 +1,5 @@
+    Checking burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+    Checking burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+    Checking burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+    Checking burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 3.17s

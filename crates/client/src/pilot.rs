@@ -61,6 +61,8 @@ fn actors(game: &Playground) -> [ActorView; core::MAX_PLAYERS] {
         let mut local = game.world.player;
         local.body.x = game.previous.body.x + (local.body.x - game.previous.body.x) * game.alpha;
         local.body.y = game.previous.body.y + (local.body.y - game.previous.body.y) * game.alpha;
+        local.body.height = game.previous.body.height
+            + (local.body.height - game.previous.body.height) * game.alpha;
         views[0] = ActorView {
             movement: local,
             combat: game.combat.player,
@@ -239,13 +241,13 @@ fn segment(a: Vec2, b: Vec2, z: f32) -> Draw {
     d
 }
 /// Read-only cover query. Artwork clips to the same center-origin terrain interval.
+#[cfg(test)]
 fn clearance(body: core::Rect, aim: core::Vec2, barrel: f32) -> f32 {
-    let origin = core::body_center(body);
-    core::PRACTICE_ARENA
-        .solids
-        .iter()
-        .filter_map(|r| core::ray_rect(origin, aim, *r, f64::from(barrel)))
-        .fold(barrel, |m, d| m.min(d as f32))
+    clearance_in(body, aim, barrel, &core::PRACTICE_ARENA)
+}
+fn clearance_in(body: core::Rect, aim: core::Vec2, barrel: f32, arena: &core::Arena) -> f32 {
+    core::mixed::cover(core::body_center(body), aim, f64::from(barrel), arena)
+        .map_or(barrel, |d| d as f32)
         .max(0.)
 }
 pub fn setup(
@@ -278,14 +280,19 @@ pub fn setup(
     commands.insert_resource(art);
     commands.init_resource::<Animation>();
 }
+#[cfg(test)]
 fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
+    pose_in(view, anim, part, &core::PRACTICE_ARENA)
+}
+fn pose_in(view: ActorView, anim: Animator, part: Part, arena: &core::Arena) -> Draw {
     let p = view.movement;
     let c = view.combat;
     let state = motion(p, c.alive());
     let facing = if c.aim.x < 0. { -1. } else { 1. };
     let aim = Vec2::new(c.aim.x as f32, -c.aim.y as f32);
     let angle = aim.y.atan2(aim.x);
-    let origin = Vec2::new(0., 34.);
+    let drop = (68. - p.body.height) as f32;
+    let origin = Vec2::new(0., p.body.height as f32 / 2.);
     let weapon_point = |x: f32, y: f32| origin + aim * x + Vec2::new(-aim.y, aim.x) * y * facing;
     let reload = if c.weapon().reload_ticks > 0 {
         1. - f32::from(c.weapon().reload_ticks) / f32::from(c.selected.tuning().reload)
@@ -300,7 +307,7 @@ fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
     };
     let travel = if p.velocity.x < 0. { -1. } else { 1. };
     let legs = [(-5., 0.5), (5., 0.)].map(|(rest, offset)| {
-        let hip = Vec2::new(rest, 26.);
+        let hip = Vec2::new(rest, 26. - drop);
         let ankle = match state {
             Motion::Run => foot(anim.phase + offset, travel, rest),
             Motion::Air => Vec2::new(rest - 3. * facing, if rest < 0. { 12. } else { 8. }),
@@ -311,7 +318,7 @@ fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
         let knee = joint(hip, ankle, 13., facing);
         (hip, knee, ankle)
     });
-    let shoulder = Vec2::new(-5. * facing, 42. + breath);
+    let shoulder = Vec2::new(-5. * facing, 42. + breath - drop);
     let near_hand = weapon_point(if c.selected == WeaponId::M416 { 4. } else { 2. }, -5.);
     let far_hand = weapon_point(
         if c.selected == WeaponId::M416 {
@@ -322,7 +329,7 @@ fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
         -3. - mag_travel,
     );
     let near_elbow = joint(shoulder, near_hand, 12., -facing);
-    let far_shoulder = Vec2::new(3. * facing, 42. + breath);
+    let far_shoulder = Vec2::new(3. * facing, 42. + breath - drop);
     let far_elbow = joint(far_shoulder, far_hand, 14., -facing);
     let mut d = match part {
         Part::Pack => Draw::new(Vec2::new(-12. * facing, 36.), Tile::Pack, 1.0),
@@ -402,6 +409,18 @@ fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
     };
     if matches!(
         part,
+        Part::Pack
+            | Part::Torso
+            | Part::Head
+            | Part::Badge
+            | Part::HealthBack
+            | Part::Health
+            | Part::Marker
+    ) {
+        d.at.y -= drop;
+    }
+    if matches!(
+        part,
         Part::Pack | Part::Torso | Part::Head | Part::FarBoot | Part::NearBoot
     ) {
         d.scale.x *= facing;
@@ -417,7 +436,7 @@ fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
             | Part::FarHand
             | Part::NearFore
             | Part::FarFore
-    ) && clearance(p.body, c.aim, c.selected.tuning().barrel as f32) < 1.
+    ) && clearance_in(p.body, c.aim, c.selected.tuning().barrel as f32, arena) < 1.
     {
         d.visible = false;
     }
@@ -476,7 +495,7 @@ pub fn present(
     }
     for (part, mut sprite, mut t, mut visible) in &mut parts {
         let view = views[part.actor];
-        let d = pose(view, animation.0[part.actor], part.part);
+        let d = pose_in(view, animation.0[part.actor], part.part, &game.arena());
         *visible = if view.present && d.visible {
             Visibility::Visible
         } else {
@@ -486,7 +505,7 @@ pub fn present(
         sprite.color = d.tint;
         let base = Vec2::new(
             (view.movement.body.x + 18.) as f32,
-            -(view.movement.body.y + 68.) as f32,
+            -(view.movement.body.y + view.movement.body.height) as f32,
         );
         t.translation = (base + d.at).extend(d.z);
         t.rotation = Quat::from_rotation_z(d.angle);
@@ -546,10 +565,11 @@ pub fn present(
             sprite.color = crate::artwork::color(crate::artwork::CREAM);
             let kick = game.feedback.kick(part.actor);
             t.translation -= Vec3::new(d.angle.cos() * kick, d.angle.sin() * kick, 0.);
-            if clearance(
+            if clearance_in(
                 view.movement.body,
                 view.combat.aim,
                 view.combat.selected.tuning().barrel as f32,
+                &game.arena(),
             ) < 9.
             {
                 *visible = Visibility::Hidden;
@@ -558,10 +578,11 @@ pub fn present(
         if matches!(part.part, Part::Weapon) {
             // Crop the atlas at the terrain intersection, retaining the left edge
             // and moving the quad center to leave local x=0 exactly at the origin.
-            let allowed = clearance(
+            let allowed = clearance_in(
                 view.movement.body,
                 view.combat.aim,
                 view.combat.selected.tuning().barrel as f32,
+                &game.arena(),
             );
             if allowed < view.combat.selected.tuning().barrel as f32 {
                 let width = 32. + allowed;

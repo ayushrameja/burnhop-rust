@@ -1,6 +1,8 @@
 mod adapter;
 mod artwork;
 mod combat_view;
+mod ember_review;
+mod ember_routes;
 mod frame_profile;
 mod hud;
 mod menu;
@@ -27,6 +29,11 @@ use burnhop_gameplay_core::{
 #[derive(Resource)]
 struct Playground {
     online: Option<online::Online>,
+    map: burnhop_gameplay_core::offline::MapId,
+    stance: burnhop_gameplay_core::offline::Stance,
+    release_gate: bool,
+    recovery_tick: Option<u64>,
+    ember_review: Option<ember_review::Review>,
     menu: menu::Session,
     input_blocked: bool,
     world: GameWorld,
@@ -43,6 +50,12 @@ struct Playground {
     combat_route: Option<playtest::CombatRoute>,
 }
 impl Playground {
+    fn arena(&self) -> burnhop_gameplay_core::Arena {
+        self.map.arena()
+    }
+    fn ember(&self) -> bool {
+        self.map == burnhop_gameplay_core::offline::MapId::EmberRelay
+    }
     fn local_id(&self) -> burnhop_gameplay_core::ActorId {
         self.online
             .as_ref()
@@ -55,6 +68,11 @@ impl Default for Playground {
         let world = GameWorld::new(&PRACTICE_ARENA);
         Self {
             online: None,
+            map: Default::default(),
+            stance: Default::default(),
+            release_gate: false,
+            recovery_tick: None,
+            ember_review: None,
             menu: menu::Session::default(),
             input_blocked: false,
             previous: world.player,
@@ -81,6 +99,7 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut address = None;
     let mut offline = false;
+    let mut ember_review = false;
     let mut scripted = false;
     let mut i = 0;
     while i < args.len() {
@@ -96,6 +115,10 @@ fn main() {
                 }
             }
             "--offline" => offline = true,
+            "--ember-playtest" => {
+                ember_review = true;
+                offline = true;
+            }
             "--online-playtest" => scripted = true,
             "--combat-playtest" | "--combat-diagnostics" | "--movement-playtest" => {}
             _ => {
@@ -113,6 +136,14 @@ fn main() {
     {
         eprintln!("Choose offline practice or --connect IP:port; online route requires --connect.");
         return;
+    }
+    if ember_review && (address.is_some() || game.route.is_some() || game.combat_route.is_some()) {
+        eprintln!("Ember review cannot be combined with range/online routes.");
+        return;
+    }
+    if ember_review {
+        menu::act(&mut game, menu::Action::Ember);
+        game.ember_review = Some(Default::default());
     }
     if let Some(address) = address {
         match online::Online::new(address, scripted) {
@@ -159,6 +190,7 @@ fn main() {
             (
                 setup,
                 terrain::setup,
+                terrain::setup_ember,
                 pilot::setup,
                 combat_view::setup,
                 hud::setup,
@@ -175,6 +207,7 @@ fn main() {
                 simulate,
                 session_poll,
                 present,
+                terrain::show_map,
                 terrain::parallax,
                 pilot::present,
                 combat_view::present,
@@ -203,6 +236,8 @@ fn setup(mut commands: Commands) {
 fn capture_input(
     mut game: ResMut<Playground>,
     window: Single<(Entity, &Window), With<PrimaryWindow>>,
+    keys: Option<Res<ButtonInput<KeyCode>>>,
+    mouse_buttons: Option<Res<ButtonInput<MouseButton>>>,
     mut keyboard: MessageReader<KeyboardInput>,
     mut focus: MessageReader<WindowFocused>,
     mut mouse: MessageReader<MouseButtonInput>,
@@ -226,6 +261,9 @@ fn capture_input(
             cancel_route(&mut game, "focus lost");
         }
         game.input.clear();
+        if game.ember() {
+            game.release_gate = true;
+        }
         if game.online.is_none() {
             game.clock.reset();
         }
@@ -249,6 +287,33 @@ fn capture_input(
         mouse.clear();
         return;
     }
+    if game.ember() && game.release_gate {
+        let held = [
+            KeyCode::KeyA,
+            KeyCode::KeyD,
+            KeyCode::Space,
+            KeyCode::ShiftLeft,
+            KeyCode::ShiftRight,
+            KeyCode::KeyC,
+            KeyCode::ArrowDown,
+            KeyCode::KeyR,
+            KeyCode::Digit1,
+            KeyCode::Digit2,
+            KeyCode::F5,
+        ]
+        .into_iter()
+        .any(|k| keys.as_ref().is_some_and(|keys| keys.pressed(k)))
+            || mouse_buttons
+                .as_ref()
+                .is_some_and(|m| m.pressed(MouseButton::Left));
+        game.input.clear();
+        keyboard.clear();
+        mouse.clear();
+        if !held {
+            game.release_gate = false;
+        }
+        return;
+    }
     for event in keyboard.read() {
         if event.window != window.0 || event.repeat {
             continue;
@@ -260,6 +325,8 @@ fn capture_input(
             KeyCode::ShiftLeft => Key::JetLeft,
             KeyCode::ShiftRight => Key::JetRight,
             KeyCode::KeyR => Key::Reload,
+            KeyCode::KeyC if game.ember() => Key::CrouchC,
+            KeyCode::ArrowDown if game.ember() => Key::CrouchDown,
             KeyCode::F5 if game.online.is_none() => Key::Reset,
             KeyCode::Digit1 => Key::Pistol,
             KeyCode::Digit2 => Key::Rifle,
@@ -284,6 +351,11 @@ fn capture_input(
 }
 
 fn cancel_route(game: &mut Playground, reason: &str) {
+    if reason != "focus lost"
+        && let Some(review) = &mut game.ember_review
+    {
+        review.complete = true;
+    }
     if reason != "focus lost"
         && let Some(online) = &mut game.online
         && online.scripted()
@@ -319,6 +391,7 @@ fn simulate(mut game: ResMut<Playground>, time: Res<Time<Real>>) {
     let (ticks, alpha) = game.clock.advance(time.delta_secs_f64());
     game.alpha = alpha;
     for _ in 0..ticks {
+        let injected = ember_review::feed(&mut game);
         let tick = game.world.tick;
         if let Some(route) = game.route.take() {
             if !route.complete {
@@ -332,10 +405,49 @@ fn simulate(mut game: ResMut<Playground>, time: Res<Time<Real>>) {
             }
             game.combat_route = Some(route);
         }
-        let command = game.input.command(tick);
+        let command = injected.map_or_else(|| game.input.command(tick), |c| c.input);
         game.previous = game.world.player;
         let game_ref = &mut *game;
-        let combat_events = if game_ref.route.as_ref().is_some_and(|route| !route.complete) {
+        let combat_events = if game_ref.ember() {
+            let mut state = burnhop_gameplay_core::offline::OfflinePracticeState {
+                map: game_ref.map,
+                world: game_ref.world,
+                combat: game_ref.combat,
+                stance: game_ref.stance,
+            };
+            let result = state
+                .step(
+                    injected.unwrap_or(burnhop_gameplay_core::offline::OfflineCommand {
+                        input: command,
+                        crouch_held: game_ref.input.crouch_held(),
+                        jump_held: game_ref.input.jump_held(),
+                    }),
+                )
+                .expect("offline next tick");
+            game_ref.world = state.world;
+            game_ref.combat = state.combat;
+            game_ref.stance = state.stance;
+            if result.recovered || result.combat.player_respawned || result.combat.movement.reset {
+                game_ref.previous = game_ref.world.player;
+                game_ref.snap_camera = true;
+                game_ref.release_gate = true;
+                game_ref.input.clear();
+                let epoch = game_ref.feedback.epoch.wrapping_add(1);
+                game_ref.feedback = Default::default();
+                game_ref.feedback.epoch = epoch;
+                if result.recovered {
+                    game_ref.recovery_tick = Some(game_ref.world.tick);
+                    println!(
+                        "EMBER recovery tick={} fuel={:.3} hp={}",
+                        game_ref.world.tick,
+                        game_ref.world.player.fuel,
+                        game_ref.combat.player.health
+                    );
+                }
+            }
+            ember_review::observe(game_ref, result.recovered);
+            result.combat
+        } else if game_ref.route.as_ref().is_some_and(|route| !route.complete) {
             // Historical movement route deliberately has no attacking opponent.
             burnhop_gameplay_core::CombatEvents {
                 movement: burnhop_gameplay_core::step(
@@ -433,7 +545,8 @@ fn present(
     let mut rect = p.body;
     rect.x = game.previous.body.x + (p.body.x - game.previous.body.x) * a;
     rect.y = game.previous.body.y + (p.body.y - game.previous.body.y) * a;
-    let arena = PRACTICE_ARENA;
+    rect.height = game.previous.body.height + (p.body.height - game.previous.body.height) * a;
+    let arena = game.arena();
     let (width, height) = view_size(
         window.width() as f64,
         window.height() as f64,
@@ -447,7 +560,11 @@ fn present(
         };
     }
     let target_x = rect.x + rect.width / 2.0;
-    let target_y = rect.y + rect.height / 2.0;
+    let target_y = if game.ember() {
+        rect.y + rect.height - 34.
+    } else {
+        rect.y + rect.height / 2.0
+    };
     let (old_x, old_y) = if game.snap_camera {
         (target_x, target_y)
     } else {

@@ -4,7 +4,9 @@ use crate::{
     position,
 };
 use bevy::{asset::RenderAssetUsages, mesh::PrimitiveTopology, prelude::*};
-use burnhop_gameplay_core::PRACTICE_ARENA;
+use burnhop_gameplay_core::{PRACTICE_ARENA, offline::MapId};
+#[derive(Component)]
+pub struct TerrainMap(pub MapId);
 #[derive(Component)]
 pub struct Depth {
     home: Vec3,
@@ -12,6 +14,7 @@ pub struct Depth {
 }
 fn slab(commands: &mut Commands, x: f32, y: f32, w: f32, h: f32, z: f32, c: u32) {
     commands.spawn((
+        TerrainMap(MapId::Range),
         Sprite::from_color(color(c), Vec2::new(w, h)),
         Transform::from_xyz(x + w / 2., -y - h / 2., z),
     ));
@@ -41,6 +44,7 @@ fn polygon(
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     let mut e = commands.spawn((
+        TerrainMap(MapId::Range),
         Mesh2d(meshes.add(mesh)),
         MeshMaterial2d(materials.add(color(c))),
         Transform::from_xyz(0., 0., z),
@@ -54,6 +58,7 @@ fn polygon(
 }
 fn label(commands: &mut Commands, text: &str, x: f32, y: f32, size: f32, c: u32) {
     commands.spawn((
+        TerrainMap(MapId::Range),
         Text2d::new(text),
         TextFont {
             font_size: FontSize::Px(size),
@@ -140,6 +145,7 @@ pub fn setup(
         }
     }
     commands.spawn((
+        TerrainMap(MapId::Range),
         Mesh2d(meshes.add(Circle::new(54.))),
         MeshMaterial2d(materials.add(color(0x7b8870))),
         Transform::from_xyz(1040., -735., -11.),
@@ -187,6 +193,7 @@ pub fn setup(
     }
     for (i, rect) in PRACTICE_ARENA.solids.iter().enumerate() {
         commands.spawn((
+            TerrainMap(MapId::Range),
             Sprite::from_color(
                 color(0x41473d),
                 Vec2::new(rect.width as f32, rect.height as f32),
@@ -291,6 +298,112 @@ pub fn setup(
         1274.,
         11.,
         0x8f9779,
+    );
+}
+pub fn show_map(game: Res<crate::Playground>, mut entities: Query<(&TerrainMap, &mut Visibility)>) {
+    for (map, mut visibility) in &mut entities {
+        *visibility = if map.0 == game.map {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
+    }
+}
+pub fn setup_ember(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    use burnhop_gameplay_core::{ember::EMBER_RELAY, mixed::Quad};
+    let mut draw = |points: &[[f32; 2]], z: f32, c: u32| {
+        let vertices: Vec<[f32; 3]> = (1..points.len() - 1)
+            .flat_map(|i| [points[0], points[i], points[i + 1]])
+            .map(|p| [p[0], -p[1], 0.])
+            .collect();
+        let mut mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::default(),
+        );
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vec![[0., 0., 1.]; vertices.len()]);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vec![[0., 0.]; vertices.len()]);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+        commands.spawn((
+            TerrainMap(MapId::EmberRelay),
+            Mesh2d(meshes.add(mesh)),
+            MeshMaterial2d(materials.add(color(c))),
+            Transform::from_xyz(0., 0., z),
+            Visibility::Hidden,
+        ));
+    };
+    // Fine flat sky bands form a quiet gradient. No scenery pretends to be a floor.
+    for i in 0..95 {
+        let y = i as f32 * 20.;
+        let t = i as f32 / 94.;
+        let (a, b, u) = if t < 0.58 {
+            ([84., 47., 65.], [185., 83., 64.], t / 0.58)
+        } else {
+            ([185., 83., 64.], [231., 157., 100.], (t - 0.58) / 0.42)
+        };
+        let rgb: [u32; 3] = std::array::from_fn(|j| (a[j] + (b[j] - a[j]) * u) as u32);
+        draw(
+            &[[0., y], [3200., y], [3200., y + 20.1], [0., y + 20.1]],
+            -20.,
+            rgb[0] << 16 | rgb[1] << 8 | rgb[2],
+        );
+    }
+    for i in 0..16 {
+        let x = i as f32 * 211.;
+        let y = 1020. + (i * 79 % 200) as f32;
+        draw(
+            &[[x, y], [x + 130., y], [x + 130., 1900.], [x, 1900.]],
+            -15.,
+            0x845052,
+        );
+    }
+    for q in EMBER_RELAY.solids[..26]
+        .iter()
+        .copied()
+        .map(Quad::rect)
+        .chain(EMBER_RELAY.quads.iter().copied())
+    {
+        let points = q.0.map(|p| [p.x as f32, p.y as f32]);
+        draw(&points, 0., 0x294650);
+        for i in 0..4 {
+            let a = points[i];
+            let b = points[(i + 1) % 4];
+            let dx = b[0] - a[0];
+            let dy = b[1] - a[1];
+            let len = dx.hypot(dy);
+            let n = [-dy / len * 3., dx / len * 3.];
+            draw(
+                &[a, b, [b[0] + n[0], b[1] + n[1]], [a[0] + n[0], a[1] + n[1]]],
+                0.3,
+                if i == 0 { 0xb9d0bb } else { 0x142c36 },
+            );
+        }
+    }
+    // Cyan recovery bench and amber broken rims, confined to actual solid tops.
+    for (x, y, w, c) in [
+        (180., 1180., 75., 0x72d9df),
+        (1584., 1580., 18., 0xe7ad71),
+        (1758., 1580., 18., 0xe7ad71),
+        (1904., 1560., 18., 0xe7ad71),
+    ] {
+        draw(&[[x, y], [x + w, y], [x + w, y + 3.], [x, y + 3.]], 0.5, c);
+    }
+    // U04's broken rim follows the authored slope, with thickness inside the solid.
+    let [a, b, _, _] = EMBER_RELAY.quads[6].0;
+    let top = |x: f64| (a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x)) as f32;
+    let (left, right) = (top(1418.), top(1436.));
+    draw(
+        &[
+            [1418., left],
+            [1436., right],
+            [1436., right + 3.],
+            [1418., left + 3.],
+        ],
+        0.5,
+        0xe7ad71,
     );
 }
 pub fn parallax(

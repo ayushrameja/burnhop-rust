@@ -243,13 +243,36 @@ fn rejection_copy_is_actionable_and_cancel_allows_a_new_attempt() {
         ))
         .contains("timed out")
     );
+    // Keep the destination owned for the entire test, including client Drop.
+    // Cancel before the handshake so no running user server receives teardown traffic.
+    let endpoint = UdpSocket::bind("127.0.0.1:0").unwrap();
+    endpoint
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    let addr = endpoint.local_addr().unwrap();
     let mut game = Playground::default();
+    game.menu.editor = Editor::new(&addr.to_string());
     for _ in 0..10 {
         act(&mut game, Action::Connect);
         assert!(game.online.is_some());
+        assert_eq!(game.menu.screen, Screen::Connecting);
+        assert_eq!(game.menu.address, Some(addr));
         act(&mut game, Action::Cancel);
-        assert!(game.online.is_none());
+        assert!(game.online.is_none() && game.menu.owned.is_none());
+        assert_eq!(game.menu.screen, Screen::Main);
+        assert!(game.menu.address.is_none());
+        let mut packet = [0; 1400];
+        let (bytes, client_addr) = endpoint.recv_from(&mut packet).unwrap();
+        assert!(
+            bytes > 0,
+            "cancellation traffic must reach the owned endpoint"
+        );
+        // The canceled client has released its local socket before retrying.
+        drop(UdpSocket::bind(client_addr).unwrap());
     }
+    drop(game);
+    drop(endpoint);
+    drop(UdpSocket::bind(addr).unwrap());
 }
 #[test]
 fn native_menu_navigation_disabled_controls_and_gameplay_event_isolation() {
@@ -296,6 +319,7 @@ fn native_menu_navigation_disabled_controls_and_gameplay_event_isolation() {
         0,
         "stationary hover after reflow must not steal keyboard focus"
     );
+    send(&mut app, KeyCode::Tab, None); // Ember Relay
     send(&mut app, KeyCode::Tab, None);
     send(&mut app, KeyCode::Enter, None);
     assert_eq!(

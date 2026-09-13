@@ -180,7 +180,10 @@ pub fn capture_aim(
     {
         return;
     }
-    let point = if game.focused && !game.input_blocked {
+    let point = if game.focused
+        && !game.input_blocked
+        && !(game.ember() && (game.snap_camera || game.release_gate))
+    {
         window
             .cursor_position()
             .and_then(|cursor| cursor_world(camera.0, camera.1, cursor, window.size()))

@@ -15,6 +15,8 @@ pub enum Key {
     Reload,
     Pistol,
     Rifle,
+    CrouchC,
+    CrouchDown,
 }
 impl Key {
     fn index(self) -> usize {
@@ -24,13 +26,19 @@ impl Key {
 
 #[derive(Default)]
 pub struct InputBuffer {
-    observed: [bool; 10],
-    held: [bool; 10],
+    observed: [bool; 12],
+    held: [bool; 12],
     pending: VecDeque<(Key, bool)>,
     release: bool,
     pub aim_at: Option<Vec2>,
 }
 impl InputBuffer {
+    pub fn crouch_held(&self) -> bool {
+        self.held[Key::CrouchC.index()] || self.held[Key::CrouchDown.index()]
+    }
+    pub fn jump_held(&self) -> bool {
+        self.held[Key::Jump.index()]
+    }
     pub fn push(&mut self, key: Key, down: bool) {
         if self.observed[key.index()] == down {
             return;
@@ -50,8 +58,8 @@ impl InputBuffer {
     }
     pub fn clear(&mut self) {
         self.aim_at = None;
-        self.observed = [false; 10];
-        self.held = [false; 10];
+        self.observed = [false; 12];
+        self.held = [false; 12];
         self.pending.clear();
         self.release = true;
     }
@@ -64,7 +72,7 @@ impl InputBuffer {
             command.release_input = true;
             return command;
         }
-        let mut pressed = [false; 10];
+        let mut pressed = [false; 12];
         while let Some(&(key, down)) = self.pending.front() {
             let index = key.index();
             // Quantize a tap to at least one simulation tick. Keep its release

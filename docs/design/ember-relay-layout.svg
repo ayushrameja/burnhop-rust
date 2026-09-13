@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="1330" viewBox="0 0 1760 1330" role="img" aria-labelledby="title desc">
+<title id="title">Ember Relay v2 — original side-view map design</title>
+<desc id="desc">Uneven ground above two underground chambers, nine staggered floating platforms, four upper connections, two true fall corridors and a wide lower staging island. Coordinates match the implementation brief. Design schematic, not tested gameplay.</desc>
+<defs>
+<linearGradient id="sky" x2="0" y2="1"><stop stop-color="#542f41"/><stop offset=".56" stop-color="#b95340"/><stop offset="1" stop-color="#e79d64"/></linearGradient>
+<pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M100 0H0V100" fill="none" stroke="#f8dab9" stroke-opacity=".13" stroke-width="1.5"/></pattern>
+<pattern id="void" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M0 34L34 0" stroke="#ffb581" stroke-opacity=".3" stroke-width="3"/></pattern>
+<marker id="greenArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#98e4b1"/></marker>
+<marker id="cyanArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#8fddeb"/></marker>
+<marker id="amberArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#ffd58c"/></marker>
+</defs>
+<rect width="1760" height="1330" fill="#12242d"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<text x="80" y="65" font-size="38" fill="#f4e3cb" font-weight="700" text-anchor="start">EMBER RELAY</text>
+<text x="398" y="65" font-size="18" fill="#f2b48a" font-weight="700" text-anchor="start">02 / UNEVEN GROUND · EXPOSED LANDINGS · REAL FALLS</text>
+<text x="80" y="102" font-size="17" fill="#d6e6e4" font-weight="400" text-anchor="start">Original 2D side-view design • 3200 × 1900 world units • 35 solids • native body 36 × 68 • no movement or fuel retuning</text>
+<text x="80" y="134" font-size="15" fill="#9eb8bd" font-weight="400" text-anchor="start">Review schematic only. Route arrows show connections, not simulated trajectories. S0/B0 active; other markers are candidate test data.</text>
+<g transform="translate(80 190) scale(.4)">
+<rect width="3200" height="1900" fill="url(#sky)"/>
+<path d="M0 1160V900H190V810H290V1040H600V1000H900V1080H1240V950H1340V1080H1560V990H1800V1110H2140V980H2360V1040H2750V950H2950V1100H3200V1900H0Z" fill="#693d48" opacity=".22"/>
+<path d="M100 1260H800V1360H920L1100 1240H1280L1440 1300V1760H280V1660H100Z M1900 1340H2180L2400 1260H2700L2900 1340H3120V1770H1900Z" fill="#142c36" opacity=".63"/>
+<rect width="3200" height="1900" fill="url(#grid)"/>
+<rect x="1440" y="1050" width="140" height="850" fill="#152632" opacity=".7"/><rect x="1440" y="1050" width="140" height="850" fill="url(#void)"/>
+<rect x="1780" y="1050" width="120" height="850" fill="#152632" opacity=".7"/><rect x="1780" y="1050" width="120" height="850" fill="url(#void)"/>
+<rect id="G01" x="100" y="1180" width="320" height="100" fill="#294650" stroke="#142c36" stroke-width="3"><title>Spawn bench</title></rect>
+<path d="M100 1180H420" stroke="#b9d0bb" stroke-width="5"/>
+<text x="260.0" y="1215" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G01</text>
+<rect id="G03" x="620" y="1240" width="180" height="100" fill="#294650" stroke="#142c36" stroke-width="3"><title>Yard depression</title></rect>
+<path d="M620 1240H800" stroke="#b9d0bb" stroke-width="5"/>
+<text x="710.0" y="1275" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G03</text>
+<rect id="G05" x="1100" y="1100" width="180" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>Bot brow</title></rect>
+<path d="M1100 1100H1280" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1190.0" y="1135" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G05</text>
+<rect id="G07" x="2020" y="1220" width="160" height="100" fill="#294650" stroke="#142c36" stroke-width="3"><title>East broken lip</title></rect>
+<path d="M2020 1220H2180" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2100.0" y="1255" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G07</text>
+<rect id="G09" x="2400" y="1120" width="160" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>East crest</title></rect>
+<path d="M2400 1120H2560" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2480.0" y="1155" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G09</text>
+<rect id="G11" x="2900" y="1200" width="200" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>East refuge</title></rect>
+<path d="M2900 1200H3100" stroke="#b9d0bb" stroke-width="5"/>
+<text x="3000.0" y="1235" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G11</text>
+<rect id="U01" x="280" y="1540" width="420" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>West chamber bed</title></rect>
+<path d="M280 1540H700" stroke="#b9d0bb" stroke-width="5"/>
+<text x="490.0" y="1575" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U01</text>
+<rect id="U03" x="900" y="1640" width="400" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>West deep chamber</title></rect>
+<path d="M900 1640H1300" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1100.0" y="1675" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U03</text>
+<rect id="U05" x="1580" y="1580" width="200" height="56" fill="#294650" stroke="#142c36" stroke-width="3"><title>Rift rest island</title></rect>
+<path d="M1580 1580H1780" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1680.0" y="1615" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U05</text>
+<rect id="U06" x="1900" y="1560" width="300" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>East landing bed</title></rect>
+<path d="M1900 1560H2200" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2050.0" y="1595" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U06</text>
+<rect id="U08" x="2400" y="1640" width="480" height="120" fill="#294650" stroke="#142c36" stroke-width="3"><title>East deep chamber</title></rect>
+<path d="M2400 1640H2880" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2640.0" y="1675" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U08</text>
+<rect id="U10" x="3020" y="1540" width="100" height="56" fill="#294650" stroke="#142c36" stroke-width="3"><title>Outer exit shelf</title></rect>
+<path d="M3020 1540H3120" stroke="#b9d0bb" stroke-width="5"/>
+<text x="3070.0" y="1575" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U10</text>
+<rect id="U11" x="2570" y="1390" width="120" height="32" fill="#294650" stroke="#142c36" stroke-width="3"><title>East shaft step</title></rect>
+<path d="M2570 1390H2690" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2630.0" y="1415" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U11</text>
+<rect id="U12" x="810" y="1440" width="100" height="32" fill="#294650" stroke="#142c36" stroke-width="3"><title>West shaft step</title></rect>
+<path d="M810 1440H910" stroke="#b9d0bb" stroke-width="5"/>
+<text x="860.0" y="1465" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U12</text>
+<rect id="F01" x="300" y="960" width="160" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Yard float</title></rect>
+<path d="M300 960H460" stroke="#b9d0bb" stroke-width="5"/>
+<text x="380.0" y="985" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F01</text>
+<rect id="F02" x="650" y="820" width="120" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Offset float</title></rect>
+<path d="M650 820H770" stroke="#b9d0bb" stroke-width="5"/>
+<text x="710.0" y="845" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F02</text>
+<rect id="F03" x="1070" y="900" width="140" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Brow float</title></rect>
+<path d="M1070 900H1210" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1140.0" y="925" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F03</text>
+<rect id="F04" x="1600" y="1270" width="120" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Rift low perch</title></rect>
+<path d="M1600 1270H1720" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1660.0" y="1295" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F04</text>
+<rect id="F05" x="1640" y="1010" width="120" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Rift mid perch</title></rect>
+<path d="M1640 1010H1760" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1700.0" y="1035" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F05</text>
+<rect id="F06" x="1910" y="760" width="120" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>East high perch</title></rect>
+<path d="M1910 760H2030" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1970.0" y="785" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F06</text>
+<rect id="F07" x="2190" y="930" width="140" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>East offset float</title></rect>
+<path d="M2190 930H2330" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2260.0" y="955" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F07</text>
+<rect id="F08" x="1470" y="650" width="100" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>Optional crown</title></rect>
+<path d="M1470 650H1570" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1520.0" y="675" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F08</text>
+<rect id="F09" x="2760" y="880" width="120" height="32" fill="#365d68" stroke="#142c36" stroke-width="3"><title>East lookout</title></rect>
+<path d="M2760 880H2880" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2820.0" y="905" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">F09</text>
+<rect id="T01" x="1090" y="1530" width="160" height="50" fill="#456270" stroke="#142c36" stroke-width="3"><title>West crouch shortcut</title></rect>
+<path d="M1090 1530H1250" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1170.0" y="1565" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">T01</text>
+<rect id="T02" x="2460" y="1530" width="180" height="50" fill="#456270" stroke="#142c36" stroke-width="3"><title>East crouch shortcut</title></rect>
+<path d="M2460 1530H2640" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2550.0" y="1565" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">T02</text>
+<rect id="C01" x="360" y="1124" width="60" height="56" fill="#294650" stroke="#142c36" stroke-width="3"><title>Spawn partial cover</title></rect>
+<path d="M360 1124H420" stroke="#b9d0bb" stroke-width="5"/>
+<text x="350" y="1111" font-size="25" fill="#eef0d6" font-weight="700" text-anchor="end">C01</text>
+<polygon id="G02" points="420,1180 620,1240 620,1340 420,1280" fill="#294650" stroke="#142c36" stroke-width="3"><title>Yard descent</title></polygon>
+<path d="M420 1180L620 1240" stroke="#b9d0bb" stroke-width="5"/>
+<text x="520.0" y="1255.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G02</text>
+<polygon id="G04" points="920,1240 1100,1100 1100,1220 920,1340" fill="#294650" stroke="#142c36" stroke-width="3"><title>Brow ascent</title></polygon>
+<path d="M920 1240L1100 1100" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1010.0" y="1215.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G04</text>
+<polygon id="G06" points="1280,1100 1440,1160 1440,1280 1280,1220" fill="#294650" stroke="#142c36" stroke-width="3"><title>Broken lip descent</title></polygon>
+<path d="M1280 1100L1440 1160" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1360.0" y="1175.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G06</text>
+<polygon id="G08" points="2180,1220 2400,1120 2400,1240 2180,1320" fill="#294650" stroke="#142c36" stroke-width="3"><title>East crest ascent</title></polygon>
+<path d="M2180 1220L2400 1120" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2290.0" y="1215.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G08</text>
+<polygon id="G10" points="2700,1120 2900,1200 2900,1320 2700,1240" fill="#294650" stroke="#142c36" stroke-width="3"><title>East refuge descent</title></polygon>
+<path d="M2700 1120L2900 1200" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2800.0" y="1205.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">G10</text>
+<polygon id="U02" points="700,1540 900,1640 900,1760 700,1660" fill="#294650" stroke="#142c36" stroke-width="3"><title>West chamber descent</title></polygon>
+<path d="M700 1540L900 1640" stroke="#b9d0bb" stroke-width="5"/>
+<text x="800.0" y="1635.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U02</text>
+<polygon id="U04" points="1300,1640 1440,1560 1440,1680 1300,1760" fill="#294650" stroke="#142c36" stroke-width="3"><title>West rift approach</title></polygon>
+<path d="M1300 1640L1440 1560" stroke="#b9d0bb" stroke-width="5"/>
+<text x="1370.0" y="1645.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U04</text>
+<polygon id="U07" points="2200,1560 2400,1640 2400,1760 2200,1680" fill="#294650" stroke="#142c36" stroke-width="3"><title>East chamber descent</title></polygon>
+<path d="M2200 1560L2400 1640" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2300.0" y="1645.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U07</text>
+<polygon id="U09" points="2880,1640 3020,1540 3020,1660 2880,1760" fill="#294650" stroke="#142c36" stroke-width="3"><title>Outer exit ascent</title></polygon>
+<path d="M2880 1640L3020 1540" stroke="#b9d0bb" stroke-width="5"/>
+<text x="2950.0" y="1635.0" font-size="25" fill="#d9e5d6" font-weight="700" text-anchor="middle">U09</text>
+<rect id="actor-S0" x="200" y="1112" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.9" stroke="#8ee4ee" stroke-width="3"/>
+<text x="218" y="1096" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S0</text>
+<rect id="actor-S1" x="340" y="892" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="358" y="876" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S1</text>
+<rect id="actor-S2" x="1110" y="832" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="1128" y="816" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S2</text>
+<rect id="actor-S3" x="950" y="1572" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="968" y="1556" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S3</text>
+<rect id="actor-S4" x="1660" y="1512" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="1678" y="1496" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S4</text>
+<rect id="actor-S5" x="1950" y="692" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="1968" y="676" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S5</text>
+<rect id="actor-S6" x="3000" y="1132" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="3018" y="1116" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S6</text>
+<rect id="actor-S7" x="2770" y="1572" width="36" height="68" rx="6" fill="#8ee4ee" fill-opacity="0.3" stroke="#8ee4ee" stroke-width="3"/>
+<text x="2788" y="1556" font-size="27" fill="#8ee4ee" font-weight="700" text-anchor="middle">S7</text>
+<rect id="actor-B0" x="1170" y="1032" width="36" height="68" rx="6" fill="#ffce81" fill-opacity="0.9" stroke="#ffce81" stroke-width="3"/>
+<text x="1188" y="1016" font-size="27" fill="#ffce81" font-weight="700" text-anchor="middle">B0</text>
+<path d="M500 1110 Q650 1200 755 1170 Q855 1080 960 1160" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<path d="M970 1490 L1050 1490 M1280 1510 L1370 1480 Q1480 1390 1595 1500 M1720 1490 Q1820 1370 1950 1480 L2100 1480" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<path d="M1070 1610 H1270 M2440 1610 H2660" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<path d="M2150 1510 L2370 1570 M2685 1550 L2800 1550" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<path d="M220 1050 Q190 850 375 850 M470 890 Q520 670 700 730 M790 780 Q910 640 1090 810" fill="none" stroke="#8fddeb" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#cyanArrow)"/>
+<path d="M1200 820 Q1270 550 1500 560 M1570 590 Q1740 490 1950 665" fill="none" stroke="#8fddeb" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#cyanArrow)"/>
+<path d="M1220 865 Q1420 800 1630 945" fill="none" stroke="#ffd58c" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#amberArrow)"/>
+<path d="M1760 1500 Q1850 1160 1740 1200 M1580 1200 Q1520 940 1630 945 M1770 950 Q1790 650 1940 670" fill="none" stroke="#8fddeb" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#cyanArrow)"/>
+<path d="M2030 770 Q2120 820 2210 845 M2320 965 Q2350 1050 2420 1050" fill="none" stroke="#8fddeb" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#cyanArrow)"/>
+<path d="M865 1340 L865 1245" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<text x="865" y="1190" font-size="29" fill="#c6f3cc" font-weight="700" text-anchor="middle">M1</text>
+<text x="1810" y="1320" font-size="29" fill="#b9f1f5" font-weight="700" text-anchor="middle">M2</text>
+<path d="M2650 1320 L2640 1125" fill="none" stroke="#98e4b1" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#greenArrow)"/>
+<text x="2630" y="1060" font-size="29" fill="#c6f3cc" font-weight="700" text-anchor="middle">M3</text>
+<path d="M3155 1460 L3155 1160" fill="none" stroke="#8fddeb" stroke-width="5" stroke-dasharray="13 11" marker-end="url(#cyanArrow)"/>
+<text x="3120" y="1090" font-size="29" fill="#b9f1f5" font-weight="700" text-anchor="middle">M4</text>
+<path d="M0 1900H3200" stroke="#ffb181" stroke-width="6" stroke-dasharray="18 12"/>
+<path d="M1510 1720V1840" stroke="#ffd58c" stroke-width="5" marker-end="url(#amberArrow)"/>
+<text x="1510" y="1690" font-size="27" fill="#ffd58c" font-weight="700" text-anchor="middle">V1</text>
+<path d="M1840 1720V1840" stroke="#ffd58c" stroke-width="5" marker-end="url(#amberArrow)"/>
+<text x="1840" y="1690" font-size="27" fill="#ffd58c" font-weight="700" text-anchor="middle">V2</text>
+<text x="970" y="1830" font-size="32" fill="#d8e7dc" font-weight="700" text-anchor="middle">WEST CHAMBER</text>
+<text x="2520" y="1830" font-size="32" fill="#d8e7dc" font-weight="700" text-anchor="middle">EAST CHAMBER</text>
+<text x="1700" y="1750" font-size="25" fill="#bde8ce" font-weight="700" text-anchor="middle">U05: STOP / REST</text>
+<text x="95" y="160" font-size="40" fill="#f3d8bd" font-weight="700" text-anchor="start">ROLLING YARD</text>
+<text x="95" y="218" font-size="29" fill="#f3d8bd" font-weight="400" text-anchor="start">Broad slopes + depression + partial cover</text>
+<text x="1450" y="155" font-size="40" fill="#f3d8bd" font-weight="700" text-anchor="start">EXPOSED CROSSINGS</text>
+<text x="1450" y="213" font-size="29" fill="#f3d8bd" font-weight="400" text-anchor="start">No continuous aerial roof or lower safety floor</text>
+<text x="1515" y="490" font-size="26" fill="#ffe2b1" font-weight="700" text-anchor="middle">F08: OPTIONAL / NARROW</text>
+</g>
+<text x="80.0" y="979" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="middle">0</text>
+<text x="400.0" y="979" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="middle">800</text>
+<text x="720.0" y="979" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="middle">1600</text>
+<text x="1040.0" y="979" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="middle">2400</text>
+<text x="1360.0" y="979" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="middle">3200</text>
+<text x="66" y="195.0" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="end">0</text>
+<text x="66" y="395.0" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="end">500</text>
+<text x="66" y="595.0" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="end">1000</text>
+<text x="66" y="795.0" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="end">1500</text>
+<text x="66" y="955.0" font-size="13" fill="#9eb8bd" font-weight="400" text-anchor="end">1900</text>
+<text x="80" y="1014" font-size="16" fill="#ffcd9e" font-weight="400" text-anchor="start">Dashed bottom = recovery when living body TOP passes Y1900. V1/V2 remain open below Y1050; resources and scores are retained.</text>
+<rect x="1390" y="190" width="300" height="790" rx="14" fill="#1a323c"/>
+<text x="1410" y="225" font-size="20" fill="#f4e3cb" font-weight="700" text-anchor="start">ROUTE KEY</text>
+<path d="M1410 257H1440" stroke="#98e4b1" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="1450" y="264" font-size="15" fill="#98e4b1" font-weight="700" text-anchor="start">SAFER STAGED PATH</text>
+<text x="1410" y="291" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">More shelter; shorter jump gaps.</text>
+<text x="1410" y="313" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Still needs timing. Not hazard-free.</text>
+<path d="M1410 341H1440" stroke="#8fddeb" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="1450" y="348" font-size="15" fill="#8fddeb" font-weight="700" text-anchor="start">AERIAL CHOICES</text>
+<text x="1410" y="375" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Jet stages + exposed landings.</text>
+<text x="1410" y="397" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Rest, then brake before touchdown.</text>
+<path d="M1410 425H1440" stroke="#ffd58c" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="1450" y="432" font-size="15" fill="#ffd58c" font-weight="700" text-anchor="start">RISKY SHORTCUT</text>
+<text x="1410" y="459" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">F03 → F05 crosses a 430 gap.</text>
+<text x="1410" y="481" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">A missed landing can reach a void.</text>
+<text x="1410" y="533" font-size="18" fill="#f4e3cb" font-weight="700" text-anchor="start">LOWER CONNECTIONS</text>
+<text x="1410" y="568" font-size="15" fill="#bce6d5" font-weight="700" text-anchor="start">M1  WEST SHAFT</text>
+<text x="1410" y="591" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Drop in; staged return via U12.</text>
+<text x="1410" y="627" font-size="15" fill="#bce6d5" font-weight="700" text-anchor="start">M2  OPEN CENTRAL STEPS</text>
+<text x="1410" y="650" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">U05 → F04 → F05 → F06.</text>
+<text x="1410" y="686" font-size="15" fill="#bce6d5" font-weight="700" text-anchor="start">M3  EAST SHAFT</text>
+<text x="1410" y="709" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Main return via U11.</text>
+<text x="1410" y="745" font-size="15" fill="#bce6d5" font-weight="700" text-anchor="start">M4  OPTIONAL OUTER EXIT</text>
+<text x="1410" y="768" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Narrow lip; M3 is more forgiving.</text>
+<text x="1410" y="820" font-size="15" fill="#8ee4ee" font-weight="700" text-anchor="start">S0 / B0</text>
+<text x="1410" y="844" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Player / fixed bot. Others: candidates.</text>
+<text x="1410" y="885" font-size="15" fill="#bce6d5" font-weight="700" text-anchor="start">T01 / T02</text>
+<text x="1410" y="909" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Short crouch choices: 60 clearance.</text>
+<text x="1410" y="931" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Stand in rooms or jet over roofs.</text>
+<rect x="80" y="1050" width="410" height="170" rx="12" fill="#1a323c"/>
+<text x="98" y="1080" font-size="17" fill="#f4e3cb" font-weight="700" text-anchor="start">GROUND HAS SHAPE</text>
+<text x="98" y="1110" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">60–140 elevation changes on broad slopes.</text>
+<text x="98" y="1135" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Surface lips hide part of the body.</text>
+<text x="98" y="1160" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">C01 shields the supported initial spawn.</text>
+<text x="98" y="1185" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Cracks / chipped edges stay decorative.</text>
+<rect x="510" y="1050" width="410" height="170" rx="12" fill="#1a323c"/>
+<text x="528" y="1080" font-size="17" fill="#f4e3cb" font-weight="700" text-anchor="start">LAND, BRAKE, REFILL</text>
+<text x="528" y="1110" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Nine floats: 100–160 wide, 32 thick.</text>
+<text x="528" y="1135" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Full-body landing intervals: 64–124.</text>
+<text x="528" y="1160" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Combined horizontal coverage: 33.1%.</text>
+<text x="528" y="1185" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Fuel also regenerates while airborne.</text>
+<rect x="940" y="1050" width="410" height="170" rx="12" fill="#1a323c"/>
+<text x="958" y="1080" font-size="17" fill="#f4e3cb" font-weight="700" text-anchor="start">LOWER ROUTE HAS ROOM</text>
+<text x="958" y="1110" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Two chambers; four upper connections.</text>
+<text x="958" y="1135" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">140 gap → 200-wide island → 120 gap.</text>
+<text x="958" y="1160" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Ordinary jumps work in ideal arithmetic.</text>
+<text x="958" y="1185" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">The voids continue below both breaks.</text>
+<rect x="1370" y="1050" width="320" height="170" rx="12" fill="#1a323c"/>
+<text x="1388" y="1080" font-size="17" fill="#f4e3cb" font-weight="700" text-anchor="start">PRESERVED ON RECOVERY</text>
+<text x="1388" y="1110" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Health / ammo / fuel / scores.</text>
+<text x="1388" y="1135" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">Release inputs, then press again.</text>
+<text x="1388" y="1160" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">180 eligible ticks of bot grace.</text>
+<text x="1388" y="1185" font-size="14" fill="#d6e6e4" font-weight="400" text-anchor="start">No death penalty or tuning change.</text>
+<text x="80" y="1263" font-size="16" fill="#9eb8bd" font-weight="400" text-anchor="start">DESIGN REVIEW • Original authored coordinates • No MM layout reuse • Range / Host / Join preserved • Offline first playable only</text>
+<text x="80" y="1291" font-size="15" fill="#9eb8bd" font-weight="400" text-anchor="start">Playtest next: narrow landing control, slope jumps, shaft undersides, low-fuel decisions and whether the lower route feels useful.</text>
+</g></svg>

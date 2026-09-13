@@ -11,6 +11,9 @@
 
 mod collision;
 mod combat;
+pub mod ember;
+pub mod mixed;
+pub mod offline;
 pub use collision::{Contacts, move_body, supported};
 pub use combat::*;
 
@@ -62,9 +65,13 @@ pub struct Arena {
     pub floor_y: f64,
     pub spawn: Vec2,
     pub solids: &'static [Rect],
+    pub quads: &'static [mixed::Quad],
+    pub bot_spawn: Vec2,
 }
 
 pub const PRACTICE_ARENA: Arena = Arena {
+    quads: &[],
+    bot_spawn: BOT_SPAWN,
     width: 2400.0,
     height: 1350.0,
     floor_y: 1220.0,
@@ -138,7 +145,11 @@ pub struct Player {
 impl Player {
     fn spawn(arena: &Arena) -> Self {
         let body = Rect::new(arena.spawn.x, arena.spawn.y, BODY_WIDTH, BODY_HEIGHT);
-        let grounded = supported(&body, arena.solids);
+        let grounded = if arena.quads.is_empty() {
+            supported(&body, arena.solids)
+        } else {
+            mixed::supported(body, arena)
+        };
         Self {
             body,
             velocity: Vec2::default(),
@@ -187,6 +198,9 @@ fn approach(value: f64, target: f64, amount: f64) -> f64 {
     }
 }
 fn horizontal(player: &mut Player, axis: MoveAxis) {
+    horizontal_scaled(player, axis, 1.);
+}
+fn horizontal_scaled(player: &mut Player, axis: MoveAxis, scale: f64) {
     let acceleration = match (axis == MoveAxis::Idle, player.grounded) {
         (false, true) => 3800.0,
         (false, false) => 2300.0,
@@ -195,7 +209,7 @@ fn horizontal(player: &mut Player, axis: MoveAxis) {
     };
     player.velocity.x = approach(
         player.velocity.x,
-        axis.value() * MOVE_SPEED,
+        axis.value() * MOVE_SPEED * scale,
         acceleration * DT,
     );
 }
@@ -225,7 +239,7 @@ fn landing_within_buffer(p: &Player, axis: MoveAxis, arena: &Arena) -> bool {
             x: probe.velocity.x * DT,
             y: probe.velocity.y * DT,
         };
-        let contacts = move_body(&mut probe.body, movement, arena.solids);
+        let contacts = move_in_arena(&mut probe.body, movement, arena, false);
         if contacts.grounded {
             return true;
         }
@@ -249,6 +263,14 @@ pub fn step(
     world: &mut World,
     input: InputCommand,
     arena: &Arena,
+) -> Result<StepEvents, TickMismatch> {
+    step_scaled(world, input, arena, 1.)
+}
+fn step_scaled(
+    world: &mut World,
+    input: InputCommand,
+    arena: &Arena,
+    scale: f64,
 ) -> Result<StepEvents, TickMismatch> {
     if input.tick != world.tick {
         return Err(TickMismatch {
@@ -292,7 +314,7 @@ pub fn step(
     if input.jet_pressed && input.jet_held && p.fuel > 0.0 {
         p.thrust_latched = true;
     }
-    horizontal(p, input.move_x);
+    horizontal_scaled(p, input.move_x, if p.grounded { scale } else { 1. });
     p.thrusting = p.thrust_latched && input.jet_held && p.fuel > 0.0;
     let mut thrust = 0.0;
     if p.thrusting {
@@ -319,7 +341,7 @@ pub fn step(
         x: p.velocity.x * DT,
         y: p.velocity.y * DT,
     };
-    let contacts = move_body(&mut p.body, movement, arena.solids);
+    let contacts = move_in_arena(&mut p.body, movement, arena, p.grounded && !p.thrusting);
     if contacts.hit_x {
         p.velocity.x = 0.0;
     }
@@ -338,4 +360,12 @@ pub fn step(
     }
     p.jump_buffer_ticks = p.jump_buffer_ticks.saturating_sub(1);
     Ok(events)
+}
+
+fn move_in_arena(body: &mut Rect, delta: Vec2, arena: &Arena, grounded: bool) -> Contacts {
+    if arena.quads.is_empty() {
+        move_body(body, delta, arena.solids)
+    } else {
+        mixed::move_body(body, delta, arena, grounded).contacts
+    }
 }

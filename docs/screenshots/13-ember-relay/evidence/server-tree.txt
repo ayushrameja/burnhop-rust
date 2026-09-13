@@ -1,0 +1,46 @@
+burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+├── burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+├── burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+│   ├── burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+│   ├── renet v2.0.0
+│   │   ├── bytes v1.12.1
+│   │   ├── log v0.4.34
+│   │   └── octets v0.3.7
+│   └── renet_netcode v2.0.0
+│       ├── log v0.4.34
+│       ├── renet v2.0.0 (*)
+│       └── renetcode v2.0.0
+│           ├── chacha20poly1305 v0.10.1
+│           │   ├── aead v0.5.2
+│           │   │   ├── crypto-common v0.1.7
+│           │   │   │   ├── generic-array v0.14.7
+│           │   │   │   │   └── typenum v1.20.1
+│           │   │   │   │   [build-dependencies]
+│           │   │   │   │   └── version_check v0.9.5
+│           │   │   │   ├── rand_core v0.6.4
+│           │   │   │   │   └── getrandom v0.2.17
+│           │   │   │   │       ├── cfg-if v1.0.4
+│           │   │   │   │       ├── libc v0.2.189
+│           │   │   │   │       └── wasi v0.11.1+wasi-snapshot-preview1
+│           │   │   │   └── typenum v1.20.1
+│           │   │   └── generic-array v0.14.7 (*)
+│           │   ├── chacha20 v0.9.1
+│           │   │   ├── cfg-if v1.0.4
+│           │   │   ├── cipher v0.4.4
+│           │   │   │   ├── crypto-common v0.1.7 (*)
+│           │   │   │   ├── inout v0.1.4
+│           │   │   │   │   └── generic-array v0.14.7 (*)
+│           │   │   │   └── zeroize v1.9.0
+│           │   │   └── cpufeatures v0.2.17
+│           │   │       └── libc v0.2.189
+│           │   ├── cipher v0.4.4 (*)
+│           │   ├── poly1305 v0.8.0
+│           │   │   ├── cpufeatures v0.2.17 (*)
+│           │   │   ├── opaque-debug v0.3.1
+│           │   │   └── universal-hash v0.5.1
+│           │   │       ├── crypto-common v0.1.7 (*)
+│           │   │       └── subtle v2.6.1
+│           │   └── zeroize v1.9.0
+│           └── log v0.4.34
+├── renet v2.0.0 (*)
+└── renet_netcode v2.0.0 (*)

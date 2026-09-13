@@ -391,12 +391,12 @@ fn shot(
 ) -> Shot {
     actor.spend_shot();
     let origin = body_center(body);
-    let (distance, impact) = nearest_hit(
+    let (distance, impact) = crate::mixed::nearest_hit(
         origin,
         actor.aim,
         actor.selected.tuning().range,
         id,
-        arena.solids,
+        arena,
         targets,
     );
     Shot {
@@ -471,7 +471,11 @@ fn spawn_arena(id: ActorId, arena: &Arena) -> Arena {
         spawn: if id.index() == 0 {
             arena.spawn
         } else {
-            SPAWN_CANDIDATES[id.index()]
+            if id == ActorId::Two {
+                arena.bot_spawn
+            } else {
+                SPAWN_CANDIDATES[id.index()]
+            }
         },
         ..*arena
     }
@@ -542,7 +546,7 @@ pub fn step_match(
     inputs: [InputCommand; MAX_PLAYERS],
     arena: &Arena,
 ) -> Result<MatchEvents, TickMismatch> {
-    step_actors(state, inputs, arena, None)
+    step_actors(state, inputs, arena, None, None)
 }
 /// Predict movement only. Life, weapon state, damage and respawns stay authoritative.
 /// Complete movement state (including grace/buffer/fuel/latches) is replayed.
@@ -574,6 +578,7 @@ fn step_actors(
     mut inputs: [InputCommand; MAX_PLAYERS],
     arena: &Arena,
     mut bot_timer: Option<&mut u16>,
+    mut stance: Option<&mut crate::offline::Stance>,
 ) -> Result<MatchEvents, TickMismatch> {
     for id in ActorId::ALL {
         if state.actors[id.index()].is_some() && inputs[id.index()].tick != state.tick {
@@ -596,6 +601,11 @@ fn step_actors(
             events.respawned[i] = actor.combat.advance_life(bot);
             if events.respawned[i] {
                 actor.movement = Player::spawn(&Arena { spawn, ..*arena });
+                if i == 0
+                    && let Some(s) = stance.as_deref_mut()
+                {
+                    s.amount = 0.;
+                }
                 actor.require_neutral = true;
             }
             inputs[i].reset = false;
@@ -615,7 +625,33 @@ fn step_actors(
                         tick: state.tick,
                         player: actor.movement,
                     };
-                    events.movement[i] = step(&mut world, inputs[i], arena)?;
+                    if let Some(s) = stance.as_deref_mut() {
+                        if world.player.body.y > arena.height {
+                            s.recover(&mut world.player, arena);
+                        } else {
+                            s.update(&mut world.player, inputs[i], arena);
+                            events.movement[i] = crate::step_scaled(
+                                &mut world,
+                                inputs[i],
+                                arena,
+                                1. - 0.5 * s.amount,
+                            )?;
+                            if world.player.body.y > arena.height {
+                                s.recover(&mut world.player, arena);
+                            }
+                        }
+                        if s.recovered {
+                            inputs[i] = InputCommand {
+                                tick: state.tick,
+                                release_input: true,
+                                ..Default::default()
+                            };
+                            actor.require_neutral = true;
+                            events.movement[i] = StepEvents::default();
+                        }
+                    } else {
+                        events.movement[i] = step(&mut world, inputs[i], arena)?;
+                    }
                     actor.movement = world.player;
                 } else {
                     clear_motion(&mut actor.movement);
@@ -648,18 +684,19 @@ fn step_actors(
                 && target.combat.alive()
                 && !events.respawned[0]
                 && !events.respawned[1]
+                && !stance.as_ref().is_some_and(|s| s.recovered)
             {
                 *timer = timer.saturating_sub(1);
                 let point = body_center(target.movement.body);
                 let visible =
                     direction(body_center(actor.movement.body), point).is_some_and(|aim| {
                         matches!(
-                            nearest_hit(
+                            crate::mixed::nearest_hit(
                                 body_center(actor.movement.body),
                                 aim,
                                 WeaponId::Pistol.tuning().range,
                                 id,
-                                arena.solids,
+                                arena,
                                 &[(target.id, target.movement.body)]
                             )
                             .1,
@@ -725,6 +762,11 @@ fn step_actors(
             }
         }
     }
+    if stance.as_ref().is_some_and(|s| s.recovered)
+        && let Some(timer) = bot_timer
+    {
+        *timer = BOT_GRACE_TICKS;
+    }
     state.tick += 1;
     Ok(events)
 }
@@ -736,6 +778,15 @@ pub fn step_practice(
     input: InputCommand,
     arena: &Arena,
 ) -> Result<CombatEvents, TickMismatch> {
+    step_practice_internal(world, combat, input, arena, None)
+}
+pub(crate) fn step_practice_internal(
+    world: &mut World,
+    combat: &mut CombatState,
+    input: InputCommand,
+    arena: &Arena,
+    stance: Option<&mut crate::offline::Stance>,
+) -> Result<CombatEvents, TickMismatch> {
     if input.tick != world.tick {
         return Err(TickMismatch {
             expected: world.tick,
@@ -745,6 +796,12 @@ pub fn step_practice(
     if input.reset {
         let movement = step(world, input, arena)?;
         *combat = CombatState {
+            bot_body: Rect::new(
+                arena.bot_spawn.x,
+                arena.bot_spawn.y,
+                BODY_WIDTH,
+                BODY_HEIGHT,
+            ),
             require_neutral: true,
             ..Default::default()
         };
@@ -792,6 +849,7 @@ pub fn step_practice(
         }),
         arena,
         Some(&mut combat.bot_attack_ticks),
+        stance,
     )?;
     let player = state.actors[0].unwrap();
     world.tick = state.tick;

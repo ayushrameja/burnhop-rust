@@ -479,3 +479,244 @@ fn online_bevy_f5_is_ignored_and_focus_clears_input_without_resetting_clock() {
         "online clock must keep its partial tick on focus loss"
     );
 }
+
+#[test]
+fn ember_menu_switch_reset_and_range_online_backdrop_are_isolated() {
+    use crate::{
+        Playground,
+        menu::{self, Action},
+    };
+    use burnhop_gameplay_core::offline::*;
+    let mut g = Playground::default();
+    menu::act(&mut g, Action::Ember);
+    assert!(g.ember());
+    assert_eq!(g.world.player.body.x, 200.);
+    assert!(g.release_gate);
+    g.stance.amount = 0.5;
+    g.world.player.body.height = 60.;
+    menu::act(&mut g, Action::Resume);
+    assert_eq!(g.stance.amount, 0.5);
+    menu::act(&mut g, Action::Leave);
+    assert_eq!(g.map, MapId::Range);
+    assert_eq!(g.world, World::new(&PRACTICE_ARENA));
+    assert_eq!(g.stance, Stance::default());
+    for action in [Action::Practice, Action::Host, Action::Join] {
+        menu::act(&mut g, Action::Ember);
+        menu::act(&mut g, action);
+        assert_eq!(g.map, MapId::Range);
+        assert_eq!(g.world.player.body.height, 68.);
+        assert_eq!(g.combat.bot_body.x, 910.);
+    }
+}
+#[test]
+fn ember_camera_dimensions_snaps_and_standing_feet_anchor() {
+    for (w, h, vw) in [
+        (1280., 720., 1280.),
+        (1920., 1080., 1280.),
+        (800., 524., 1099.236641221374),
+        (480., 320., 1080.),
+    ] {
+        let (width, height) = view_size(w, h, 3200., 1900.);
+        assert!((width - vw).abs() < 1e-8);
+        assert_eq!(height, 720.);
+        assert_eq!(
+            camera_axis(218., 218., width / 2., 3200., 20., 24., 0.),
+            width / 2.
+        );
+        assert_eq!(
+            camera_axis(1146., 1146., height / 2., 1735., 24., 32., 0.),
+            1146.
+        );
+        assert_eq!(
+            camera_axis(1900., 1900., height / 2., 1735., 24., 32., 0.),
+            1375.
+        );
+    }
+    for height in [68., 60., burnhop_gameplay_core::offline::CROUCH_HEIGHT] {
+        let top = 1180. - height;
+        assert_eq!(top + height - 34., 1146.);
+    }
+}
+#[test]
+fn ordered_crouch_tap_and_held_space_survive_catchup_without_leaking_after_clear() {
+    let mut i = InputBuffer::default();
+    i.push(Key::CrouchC, true);
+    i.push(Key::CrouchC, false);
+    i.command(0);
+    assert!(i.crouch_held());
+    i.command(1);
+    assert!(!i.crouch_held());
+    i.push(Key::CrouchDown, true);
+    i.push(Key::Jump, true);
+    assert!(i.command(2).jump_pressed);
+    assert!(i.crouch_held() && i.jump_held());
+    assert!(!i.command(3).jump_pressed);
+    i.clear();
+    i.command(4);
+    assert!(!i.crouch_held() && !i.jump_held());
+}
+
+#[test]
+fn ember_physical_release_gate_survives_held_shift_down_mouse_and_repeat() {
+    use bevy::{
+        input::{
+            ButtonState,
+            keyboard::{Key as LogicalKey, KeyboardInput},
+            mouse::MouseButtonInput,
+        },
+        prelude::*,
+        window::{PrimaryWindow, WindowFocused},
+    };
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins)
+        .init_resource::<ButtonInput<KeyCode>>()
+        .init_resource::<ButtonInput<MouseButton>>()
+        .add_message::<KeyboardInput>()
+        .add_message::<MouseButtonInput>()
+        .add_message::<WindowFocused>()
+        .insert_resource(crate::Playground::default())
+        .add_systems(Update, crate::capture_input);
+    let window = app
+        .world_mut()
+        .spawn((
+            Window {
+                focused: true,
+                ..default()
+            },
+            PrimaryWindow,
+        ))
+        .id();
+    crate::menu::act(
+        &mut app.world_mut().resource_mut::<crate::Playground>(),
+        crate::menu::Action::Ember,
+    );
+    app.world_mut()
+        .resource_mut::<crate::Playground>()
+        .input_blocked = false;
+    for k in [KeyCode::ShiftLeft, KeyCode::ArrowDown] {
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(k);
+    }
+    app.world_mut()
+        .resource_mut::<ButtonInput<MouseButton>>()
+        .press(MouseButton::Left);
+    let event = KeyboardInput {
+        key_code: KeyCode::ShiftLeft,
+        logical_key: LogicalKey::Shift,
+        state: ButtonState::Pressed,
+        text: None,
+        repeat: true,
+        window,
+    };
+    for _ in 0..3 {
+        app.world_mut().write_message(event.clone());
+        app.update();
+        let mut g = app.world_mut().resource_mut::<crate::Playground>();
+        assert!(g.release_gate);
+        let cmd = g.input.command(0);
+        assert!(cmd.release_input && !cmd.jet_held && !cmd.fire_held);
+    }
+    app.world_mut()
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .release_all();
+    app.update();
+    assert!(
+        app.world().resource::<crate::Playground>().release_gate,
+        "mouse still held"
+    );
+    app.world_mut()
+        .resource_mut::<ButtonInput<MouseButton>>()
+        .release_all();
+    app.update();
+    assert!(!app.world().resource::<crate::Playground>().release_gate);
+    app.world_mut()
+        .resource_mut::<crate::Playground>()
+        .input
+        .command(0);
+    app.world_mut().write_message(KeyboardInput {
+        repeat: false,
+        ..event
+    });
+    app.update();
+    let c = app
+        .world_mut()
+        .resource_mut::<crate::Playground>()
+        .input
+        .command(1);
+    assert!(c.jet_pressed && c.jet_held);
+}
+
+#[test]
+fn ember_projection_round_trips_after_recovery_resize_and_alternate_scale() {
+    use super::combat_view::cursor_world;
+    use bevy::{
+        camera::{CameraProjection, ComputedCameraValues, RenderTargetInfo, ScalingMode},
+        prelude::*,
+    };
+    for (width, height, scale, zoom) in [
+        (1280., 720., 1., 1.),
+        (800., 524., 2., 0.75),
+        (480., 320., 2., 1.25),
+        (2000., 500., 1., 1.),
+    ] {
+        let (w, h) = view_size(width, height, 3200., 1900.);
+        let (w, h) = (w * zoom, h * zoom);
+        let mut projection = OrthographicProjection {
+            scaling_mode: ScalingMode::Fixed {
+                width: w as f32,
+                height: h as f32,
+            },
+            ..OrthographicProjection::default_2d()
+        };
+        projection.update(width as f32, height as f32);
+        let camera = Camera {
+            computed: ComputedCameraValues {
+                clip_from_view: projection.get_clip_from_view(),
+                target_info: Some(RenderTargetInfo {
+                    physical_size: UVec2::new((width * scale) as u32, (height * scale) as u32),
+                    scale_factor: scale as f32,
+                }),
+                ..default()
+            },
+            ..default()
+        };
+        for (x, y) in [(640., -1146.), (2660., -1375.), (1600., -650.)] {
+            let transform = GlobalTransform::from_translation(Vec3::new(x, y, 0.));
+            for (sx, sy) in [(0.5, 0.5), (0.25, 0.75), (0.8, 0.1)] {
+                let cursor = Vec2::new(width as f32 * sx, height as f32 * sy);
+                let point = cursor_world(
+                    &camera,
+                    &transform,
+                    cursor,
+                    Vec2::new(width as f32, height as f32),
+                )
+                .unwrap();
+                assert!((point.x - (f64::from(x) + (f64::from(sx) - 0.5) * w)).abs() < 0.001);
+                assert!((point.y - (-f64::from(y) + (f64::from(sy) - 0.5) * h)).abs() < 0.001);
+                let round_trip = camera
+                    .world_to_viewport(&transform, Vec3::new(point.x as f32, -point.y as f32, 0.))
+                    .unwrap();
+                assert!((round_trip - cursor).length() < 0.001);
+            }
+            assert!(
+                cursor_world(
+                    &camera,
+                    &transform,
+                    Vec2::new(-1., 0.),
+                    Vec2::new(width as f32, height as f32)
+                )
+                .is_none()
+            );
+            assert!(
+                cursor_world(
+                    &camera,
+                    &transform,
+                    Vec2::ZERO,
+                    Vec2::new(width as f32 + 100., height as f32)
+                )
+                .is_none()
+            );
+        }
+    }
+}

@@ -293,6 +293,9 @@ fn overlay(game: &Playground) -> String {
     if !game.focused && game.online.is_none() {
         return "PRACTICE PAUSED\nClick back, then press controls again.".into();
     }
+    if game.ember() && game.release_gate {
+        return "BACK ON THE BENCH\nRelease controls to continue.".into();
+    }
     String::new()
 }
 pub fn present(
@@ -338,7 +341,11 @@ pub fn present(
             Field::Mode => if game.online.is_some() {
                 "DIRECT CONNECT"
             } else {
-                "FIELD RANGE / PRACTICE"
+                if game.ember() {
+                    "EMBER RELAY / OFFLINE"
+                } else {
+                    "FIELD RANGE / PRACTICE"
+                }
             }
             .into(),
             Field::Connection => {
@@ -478,16 +485,22 @@ pub fn present(
                 } else if compact {
                     format!(
                         "F1 Hide controls\nA/D Move  SPACE Jump  SHIFT Jet\nMouse Aim/Fire  1/2 Gun  R Reload{}",
-                        if game.online.is_none() {
+                        if game.ember() {
+                            "  F5 Reset\nC / Down Crouch"
+                        } else if game.online.is_none() {
                             "  F5 Reset"
                         } else {
                             ""
                         }
                     )
+                } else if game.ember() {
+                    "A/D Move   SPACE Jump   SHIFT Jet   Mouse Aim/Fire\nC/Down Crouch   1/2 Weapon   R Reload   F5 Reset".into()
                 } else {
                     format!(
                         "A/D Move   SPACE Jump   SHIFT Jet   Mouse Aim/Fire   1/2 Weapon   R Reload{}",
-                        if game.online.is_none() {
+                        if game.ember() {
+                            "   F5 Reset   C / Down Crouch"
+                        } else if game.online.is_none() {
                             "   F5 Reset"
                         } else {
                             ""

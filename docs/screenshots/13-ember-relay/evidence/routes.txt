@@ -1,0 +1,74 @@
+   Compiling burnhop-gameplay-core v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/gameplay-core)
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.53s
+     Running tests/ember.rs (target/debug/deps/ember-3741a1ebc94a6dce)
+
+running 14 tests
+ROUTE cover-hop fuel=60 ticks=42 seconds=0.700 spent=0.000
+test extreme_sweeps_block_floats_roofs_sides_and_ceiling_without_tunneling ... ok
+test map_rays_share_slopes_roofs_occlusion_and_open_sightlines ... ok
+ROUTE yard-shaft-jump fuel=60 ticks=40 seconds=0.667 spent=0.000
+test held_space_and_jets_prevent_recrouch_and_airborne_hold_cannot_shrink ... ok
+test geometry_and_all_authored_spawns_are_valid_and_stable ... ok
+test both_voids_are_full_height_and_recover_without_death ... ok
+test range_wrapper_ignores_stance_and_keeps_exact_body_and_defaults ... ok
+test grace_counts_only_eligible_ticks_and_first_attempt_is_180 ... ok
+test all_nine_slopes_walk_both_directions_and_idle_without_drift ... ok
+ROUTE F01 fuel=60 ticks=84 seconds=1.400 spent=20.000
+test recovery_preserves_resources_advances_reload_once_and_requires_release ... ok
+test f5_resets_active_map_and_cloned_partial_stance_replays_exactly ... ok
+test threshold_pre_post_movement_and_dead_precedence ... ok
+ROUTE F02 fuel=60 ticks=92 seconds=1.533 spent=20.000
+test seams_preserve_horizontal_speed_and_grounded_descent ... ok
+test crouch_partial_expansion_and_ceiling_jet_in_both_sleeves ... ok
+ROUTE F03 fuel=60 ticks=109 seconds=1.817 spent=20.000
+ROUTE crown-F08 fuel=60 ticks=92 seconds=1.533 spent=22.857
+ROUTE crown-to-F06 fuel=60 ticks=112 seconds=1.867 spent=20.000
+ROUTE risky-F03-F05 fuel=60 ticks=112 seconds=1.867 spent=20.000
+ROUTE lower-west-east fuel=60 ticks=47 seconds=0.783 spent=0.000
+ROUTE lower-island-east fuel=60 ticks=44 seconds=0.733 spent=0.000
+ROUTE lower-east-island fuel=60 ticks=43 seconds=0.717 spent=0.000
+ROUTE lower-island-west fuel=60 ticks=42 seconds=0.700 spent=0.000
+ROUTE M2-U05-F04 fuel=60 ticks=97 seconds=1.617 spent=25.714
+ROUTE M2-F04-F05 fuel=60 ticks=91 seconds=1.517 spent=22.857
+ROUTE M2-F05-F06 fuel=60 ticks=92 seconds=1.533 spent=22.857
+ROUTE M1-floor-U12 fuel=60 ticks=55 seconds=0.917 spent=19.048
+ROUTE M1-U12-surface fuel=60 ticks=86 seconds=1.433 spent=20.000
+ROUTE M3-floor-U11 fuel=60 ticks=92 seconds=1.533 spent=22.857
+ROUTE M3-U11-surface fuel=60 ticks=91 seconds=1.517 spent=22.857
+ROUTE M4-outer fuel=60 ticks=94 seconds=1.567 spent=25.714
+ROUTE F06-F07 fuel=60 ticks=57 seconds=0.950 spent=0.000
+ROUTE F09-lookout fuel=60 ticks=96 seconds=1.600 spent=25.714
+ROUTE west-crouch fuel=60 ticks=107 seconds=1.783 spent=0.000
+ROUTE west-crouch-reverse fuel=60 ticks=104 seconds=1.733 spent=0.000
+ROUTE east-crouch fuel=60 ticks=122 seconds=2.033 spent=0.000
+ROUTE east-crouch-reverse fuel=60 ticks=120 seconds=2.000 spent=0.000
+ROUTE cover-hop fuel=100 ticks=42 seconds=0.700 spent=0.000
+ROUTE yard-shaft-jump fuel=100 ticks=40 seconds=0.667 spent=0.000
+ROUTE F01 fuel=100 ticks=87 seconds=1.450 spent=20.000
+ROUTE F02 fuel=100 ticks=94 seconds=1.567 spent=20.000
+ROUTE F03 fuel=100 ticks=112 seconds=1.867 spent=20.000
+ROUTE crown-F08 fuel=100 ticks=95 seconds=1.583 spent=22.857
+ROUTE crown-to-F06 fuel=100 ticks=114 seconds=1.900 spent=20.000
+ROUTE risky-F03-F05 fuel=100 ticks=114 seconds=1.900 spent=20.000
+ROUTE lower-west-east fuel=100 ticks=47 seconds=0.783 spent=0.000
+ROUTE lower-island-east fuel=100 ticks=44 seconds=0.733 spent=0.000
+ROUTE lower-east-island fuel=100 ticks=43 seconds=0.717 spent=0.000
+ROUTE lower-island-west fuel=100 ticks=42 seconds=0.700 spent=0.000
+ROUTE M2-U05-F04 fuel=100 ticks=99 seconds=1.650 spent=25.714
+ROUTE M2-F04-F05 fuel=100 ticks=94 seconds=1.567 spent=22.857
+ROUTE M2-F05-F06 fuel=100 ticks=95 seconds=1.583 spent=22.857
+ROUTE M1-floor-U12 fuel=100 ticks=53 seconds=0.883 spent=19.048
+ROUTE M1-U12-surface fuel=100 ticks=89 seconds=1.483 spent=20.000
+ROUTE M3-floor-U11 fuel=100 ticks=95 seconds=1.583 spent=22.857
+ROUTE M3-U11-surface fuel=100 ticks=94 seconds=1.567 spent=22.857
+ROUTE M4-outer fuel=100 ticks=97 seconds=1.617 spent=25.714
+ROUTE F06-F07 fuel=100 ticks=57 seconds=0.950 spent=0.000
+ROUTE F09-lookout fuel=100 ticks=99 seconds=1.650 spent=25.714
+ROUTE west-crouch fuel=100 ticks=107 seconds=1.783 spent=0.000
+ROUTE west-crouch-reverse fuel=100 ticks=104 seconds=1.733 spent=0.000
+ROUTE east-crouch fuel=100 ticks=122 seconds=2.033 spent=0.000
+ROUTE east-crouch-reverse fuel=100 ticks=120 seconds=2.000 spent=0.000
+test measured_traversal_stages_at_sixty_and_full_fuel ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

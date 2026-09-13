@@ -1,5 +1,7 @@
 # Roadmap
 
+Current continuation (2026-09-13): save the user-approved and independently reviewed offline Ember Relay milestone to `origin/main`; both P3 fixes are complete. See [checkpoint 15](handoffs/15-ember-relay-checkpoint.md). **New remote CI is pending; the user will monitor the exact final SHA on macOS ARM64 and Windows x64.** No completion wait, repeated polling or background watcher. Windows hardware/LAN/internet validation remains separate.
+
 ## Completed
 
 - [x] Create a separate project folder and local Git repository.
@@ -92,8 +94,8 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 - [x] Final 111 tests, formatting, strict Clippy, locked host/Mac ARM64 builds, zero-dependency core, headless boundary, unchanged frozen fixtures and fourteen inspected PNGs. See [handoff 10](handoffs/10-menu-and-hosting.md).
 - [x] Human menu/hosting review: all six checks explicitly approved on 2026-09-13; approval notes below are preserved.
 - [x] Checkpoint save authorized; fresh local validation and reviewed commit contents recorded in [handoff 11](handoffs/11-menu-hosting-checkpoint.md).
-- [ ] Exact-final-SHA remote CI completion: pending, handed to the user for manual monitoring after the authorized push.
-- [ ] Windows compilation of this checkpoint and Windows hardware/GPU checks. Remote CI is pending; historical checkpoint CI is separate.
+- [x] Checkpoint CI reported passing on macOS ARM64 and Windows x64 for approved SHA `7e9610a3d2398e058bfee74bf7fd684b8f0d13fe` in [run 34740619832](https://github.com/ayushrameja/burnhop-rust/actions/runs/34740619832), per the inventory task brief; not independently queried during this audit.
+- [ ] Windows hardware/GPU checks. Windows CI success is reported for this checkpoint; hardware playtesting remains separate.
 - [ ] Second-computer/LAN review is explicitly deferred; internet reachability remains unverified.
 
 ## 7. Hosting and Go services
@@ -130,6 +132,87 @@ The user explicitly reports all six manager-requested checks passed on the local
 The manager independently reran 111 tests, formatting, strict Clippy and the locked Mac build successfully during review. New-change Windows CI, Windows hardware/GPU, deferred second-machine LAN, Mac-to-Windows, real internet and eight-human testing remain separate outstanding validation. Next: a separately authorized save and exact-final-SHA macOS/Windows CI checkpoint, then the web-to-native feature inventory. This approval records playtest results; it does not commit or push the changes.
 
 
-## Current checkpoint and next action — 2026-09-13
+## Historical checkpoint 11 handoff — 2026-09-13
 
 [11-menu-hosting-checkpoint.md](handoffs/11-menu-hosting-checkpoint.md) supersedes the historical next-action statements above: human menu/hosting review passed all six checks, and the user now authorizes commit and normal push to `origin/main`. Fresh formatting, strict Clippy, 111 tests, locked host/Mac ARM64 builds and dependency boundaries pass; no implementation fix was needed. All approval notes and prior evidence are preserved. Remote macOS ARM64 and Windows x64 CI remains **pending** for the final pushed SHA. The user will monitor the exact Actions run; stop after handoff without polling for completion. This is not a fully validated checkpoint until its own CI results are known. Windows hardware, deferred second-machine LAN, Mac-to-Windows, real internet and eight-human testing remain separate. The later feature inventory is outside this save task.
+
+
+## Current inventory and migration sequence — 2026-09-13
+
+[Handoff 12](handoffs/12-web-to-native-inventory.md) and [WEB_TO_NATIVE_INVENTORY.md](WEB_TO_NATIVE_INVENTORY.md) supersede historical next-action statements above. Both trees were initially clean; native HEAD is the approved `7e9610a3d2398e058bfee74bf7fd684b8f0d13fe`. The brief reports Mac ARM64/Windows x64 CI success for that checkpoint; no live CI check, new build or gameplay test was performed in this documentation task.
+
+- [x] Inventory actual active web maps, characters, weapons, camera, audio, every settings/input option and backend boundaries with source/asset references, native gaps, reuse constraints and acceptance checks.
+- [x] Record full repository SHAs/status, asset provenance gaps, stale-reference discrepancies and source-versus-runtime evidence limits.
+- [x] Confirm first map with the user: **Outpost**, the active web multiplayer map. Practice range remains the existing native baseline.
+- [x] Define a bounded proposed first implementation task, affected systems, compatibility considerations and regression/human checks in inventory section 11.
+- [ ] **Superseded inventory proposal; do not implement:** Proposed milestone 13: offline Outpost with all authored collision contours, safe player/bot spawns, polygon movement/rays, required tunnel crouch, open-floor recovery and map-aware camera. Preserve approved range/standing/weapon/menu behavior; introduce basic local framing preference alongside camera. Offline-first scope and exact camera/crouch/recovery recommendations need to be adopted in the implementation brief.
+- [ ] Extend Outpost to current native direct-connect Host/Join with explicit map/stance compatibility, complete prediction/snapshots, map-scoped spawns and a deliberate online fall policy. A room service is not needed for this step.
+- [ ] Character detail and customization in small playable slices; active look persistence first, complete catalog/outfits/named looks and online appearance after.
+- [ ] Weapon batches: Revolver/AK-47, UZI/UMP, Sniper; then practice racks, dual transfer/reload and punch in separately reviewable slices. Preserve approved pistol/M416 behavior; decide additional web combat mechanics explicitly.
+- [ ] Audio with mute/channel controls on introduction; check provenance and actual native playback before asset parity claims.
+- [ ] Complete settings/remapping/reduced motion/graphics and robust versioned local persistence, expanding the basic preferences introduced with earlier features.
+- [ ] Rust ready/countdown/timed-round/results/rematch flow; authoritative pickup/supply schedules once weapon and match-clock dependencies exist.
+- [ ] Backend room/invite integration: evaluate existing service adapter versus small Go supporting service, secure admission and reachable Rust match endpoints. Keep Rust movement/combat authority; accounts/database only for concrete later needs. Existing hosting is user-reported Germany; official India deployment remains future separately authorized work.
+- [ ] Distribution/signing/updates and clean-machine Mac/Windows checks, then broader hardware, second-machine LAN, cross-platform and real internet validation. No completion inferred from local Mac approval or CI.
+
+This sequence advances crouch only because Outpost's tunnels require a shorter collider. Basic settings accompany each feature. Full catalog, weapon handling, audio, cloud profiles and internet hosting are not part of the first map milestone. The inventory documents asset/license unknowns and deliberate native differences; do not treat them as permission to change approved direction. No code, asset, dependency, deployment, commit or push was performed or authorized by this audit.
+
+
+## Revised first-map milestone — original geometry (2026-09-13)
+
+- [x] Record the user's original-geometry decision: no MM permission obtained, no reuse/extension of Outpost layout; broad GTA/Apex atmosphere/gameplay references only.
+- [x] Record approved resource/score-preserving fall recovery, released-input gate and 180-tick bot grace. No further recovery/provenance approval question for this design.
+- [x] Complete v1 (geometry superseded below) [Ember Relay original-map brief](ORIGINAL_MAP_IMPLEMENTATION_BRIEF.md) and [editable SVG layout](design/ember-relay-layout.svg): 3200×1900, three connected areas, 17 solids, eight candidate spawns/fixed bot, staged jet climbs, short crouch alternatives, original evening visuals and bounded implementation/acceptance scope. Verify source values, coordinates/links and rendered SVG readability; movement numbers are estimates, not runtime tests.
+- [x] Mark the Outpost brief and inventory's geometry-import direction historical; preserve their reference findings and all approved native work.
+- [ ] When implementation is requested: add v2 original static geometry, nine convex-ramp queries, offline stance/spawn/recovery state and simple original native visuals; retain dependency-free core and immutable range fixtures.
+- [ ] Add the offline map action and map-aware camera/aim/resize handling; preserve range defaults, fixed network codec, online range and all Host/Join behavior.
+- [ ] Run meaningful collision/traversal/clearance/recovery/aim/switching regressions, appropriate Mac/Windows checks and the brief's native human route. Record observations before tuning original geometry or considering expansion.
+
+Current first-map scope supersedes the older Outpost-first entries above, including their tentative Wide/settings work. No gameplay code, dependency change, runtime asset, build, commit, push, deployment, extra agent or online map implementation is part of this design completion. Later catalog/backend milestones remain deferred recommendations, not authorization; replace any old Outpost online-plan assumption with a separately scoped original-map decision after offline acceptance.
+
+
+## Ember Relay v2 — geometry revision before implementation (2026-09-13)
+
+- [x] Record user feedback: v1 too flat/orderly/safe; add broad elevation/partial cover, short exposed floating platforms, meaningful lower routing and real fuel-related falls. Preserve original layout authorship and simple evening visuals.
+- [x] Revise [brief](ORIGINAL_MAP_IMPLEMENTATION_BRIEF.md) and [SVG](design/ember-relay-layout.svg):35 solids (26 rectangles/nine convex ramps), unchanged 3200×1900 bounds; nine 100–160-wide floats; two lower chambers,140/120 jump gaps and 200-wide rest island; two brief crouch shortcuts/four upper connections; unobstructed central recovery voids.
+- [x] Recalculate native jump/jet/fuel/landing estimates, supported S0/B0 and candidate placements, updated deepest-floor camera extent and selected sightlines; verify document links and rendered SVG. These are design/static checks, not gameplay validation or spawn-fairness proof.
+- [ ] User design review of v2. No unresolved material question; geometry and route feel remain recommendations awaiting review.
+- [ ] On subsequent implementation request, follow the brief’s bounded shared-core/offline plan and exact geometry. Preserve airborne fuel regeneration, resource/score retention, release gate and 180 eligible bot-grace ticks, plus range/Host/Join/fixed codec/frozen fixtures.
+- [ ] Native traversal/aim/recovery/switching tests and short human route: pay particular attention to narrow-platform braking, rising-slope hops, shaft undersides, underfuel shortcuts and lower-route usefulness. Adjust original geometry if needed before approved tuning.
+
+V2 supersedes v1’s 17-solid counts and old route estimates. No builds, gameplay implementation, generated runtime assets, new weapons/audio/backend/maps, agents, commits, pushes or deployment in this revision. Review readiness does not imply approval or proven gameplay quality.
+
+
+## Milestone 13 — offline Ember Relay implementation (2026-09-13)
+
+This supersedes the earlier design-only next actions while retaining their history.
+
+- [x] User-approved v2 geometry implemented exactly: 35 solids, S0/B0, convex collision/rays, full-height voids; no tuning or geometry deviations.
+- [x] Offline stance/clearance, active-map reset/respawn, preserved-resource recovery/neutral gate/eligible grace, camera/aim lifecycle and original simple native visuals.
+- [x] Ember Relay second menu action; range defaults, frozen fixtures, fixed online codec, and Host/Join preserved.
+- [x] 135 tests, formatting/strict Clippy, locked host/Mac ARM64 builds, dependency boundaries and unchanged frozen hashes; 26 stages at 60/full fuel, both sleeves and voids, low-fuel cases and extreme sweeps.
+- [x] Actual native injected traversal, desktop/800×524/480×320 presentation, ordinary map/reset/pause/fire/resize interaction and two-window local hosting rechecked; inspected framebuffer evidence indexed in [screenshots](screenshots/13-ember-relay/README.md).
+- [x] User reports completing the requested offline playtest and says “it is working great” (2026-09-13). Offline-experience approval; no additional Windows/LAN/internet or per-subcase physical-input evidence is inferred.
+- [x] Independent review finds no blocking defects; 135 tests, formatting, strict Clippy, locked Mac builds, frozen regression and targeted probes pass. See [handoff 14](handoffs/14-ember-relay-review.md).
+- [ ] Windows compilation/CI and hardware, second-machine LAN, Mac-to-Windows and real internet remain unverified for these changes. No inferred save or online map authorization.
+
+No collision-geometry or approved tuning correction was necessary. User playtest approval and independent review are complete; next is a separately authorized save/CI checkpoint. Screenshots and injected stages do not independently prove feel. No commits, pushes, deployment or CI actions were performed in the review.
+
+
+## Milestone 14 — independent offline review (2026-09-13)
+
+- [x] Record user-reported offline approval and review actual geometry, collision/stance, recovery/eligible grace, camera/aim, session cleanup and fixed online range behavior; no blocking defects.
+- [x] Independently rerun 135 tests, formatting/strict Clippy, locked host/Mac ARM64 builds, dependency and frozen-fixture checks; add temporary seam/corner/recovery and ephemeral-packet probes without editing runtime/tests.
+- [x] Inspect representative native desktop/compact screenshots and preserve evidence limits. Separate range-script attempt remains canceled; the ten undersized packets have a reproducible pre-handshake mechanism and plausible existing-test source, not proven historical attribution.
+- [x] Both P3 fixes: U04 decorative accent follows its authored slope; the ten-cancel test uses an owned ephemeral endpoint and verifies destination/state/socket cleanup. Focused checks, all 135 tests, formatting/strict Clippy and locked host/Mac ARM64 builds pass. Desktop/480×320 native captures retained in [handoff 14](handoffs/14-ember-relay-review.md); no additional human playtest required. Historical packet-source attribution remains qualified.
+- [ ] Separately authorized save and change-specific Mac/Windows CI checkpoint. No CI started or monitored by this review; Windows hardware, LAN, cross-platform and internet checks stay outstanding. No repeat Mac offline playtest required before save on current evidence.
+
+
+## Milestone 15 — Ember Relay save and manual CI handoff (2026-09-13)
+
+- [x] User authorizes commit and normal push of the approved milestone; no-blocker independent review and both P3 fixes recorded.
+- [x] Review branch/remote and candidate files; no newer remote commits at pre-save fetch. Preserve source/tests, inventory/design history, handoffs, 22 native screenshots and bounded logs; exclude temporary/configuration/build output.
+- [x] Reuse validation for unchanged code: 135 tests, frozen 12,000-command regression, strict Clippy and locked host/explicit Mac ARM64 builds. Fresh formatting, source/documentation diff and evidence-integrity checks pass; two original console captures retain harmless final blank lines, recorded in handoff 15. No new runtime changes or long test reruns.
+- [x] Record saved scope and manual CI handoff in [handoff 15](handoffs/15-ember-relay-checkpoint.md); the normal push starts the existing Native checks workflow. Final task response verifies pushed SHA, live remote equality and exact run association.
+- [ ] User to monitor both `aarch64-apple-darwin` and `x86_64-pc-windows-msvc` for the final SHA. Remote CI is pending in this commit; both jobs must pass before marking it cleared.
+- [ ] Windows hardware/GPU, second-machine LAN, Mac-to-Windows, real internet and eight-human validation remain separate. No repeat Mac offline human playtest required for this save.

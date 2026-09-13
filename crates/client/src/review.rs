@@ -45,6 +45,8 @@ pub fn capture(
     let c = game.combat.player;
     let mode = if game.online.is_some() {
         "online"
+    } else if game.ember() {
+        "ember"
     } else {
         "practice"
     };
@@ -150,9 +152,16 @@ pub fn capture(
                 .is_some_and(|o| o.network.status.terminal()),
         ),
     ];
-    let automatic = candidates
-        .into_iter()
-        .find(|(name, ready)| *ready && !state.seen.contains(name));
+    let route_capture = game
+        .ember_review
+        .as_ref()
+        .and_then(|r| r.capture_name)
+        .filter(|name| !state.seen.contains(name));
+    let automatic = route_capture.map(|name| (name, true)).or_else(|| {
+        candidates
+            .into_iter()
+            .find(|(name, ready)| *ready && !state.seen.contains(name))
+    });
     let name = if let Some((name, _)) = automatic {
         state.seen.insert(name);
         Some(name.to_owned())

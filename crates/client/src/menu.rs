@@ -24,6 +24,7 @@ pub enum Screen {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
     Practice,
+    Ember,
     Host,
     Join,
     Quit,
@@ -166,6 +167,9 @@ pub fn address(text: &str) -> Result<SocketAddr, String> {
 }
 pub fn release(game: &mut Playground) {
     game.input.clear();
+    if game.ember() {
+        game.release_gate = true;
+    }
     game.input_blocked = true;
     game.previous = game.world.player;
     game.alpha = 1.;
@@ -185,6 +189,11 @@ fn change(game: &mut Playground, screen: Screen) {
 /// Reuse the bounded arena/entity pools, replace all per-session simulation/history.
 fn reset(game: &mut Playground) {
     game.online = None;
+    game.map = Default::default();
+    game.stance = Default::default();
+    game.release_gate = false;
+    game.recovery_tick = None;
+    game.ember_review = None;
     game.menu.owned = None;
     game.menu.address = None;
     game.world = burnhop_gameplay_core::World::new(&burnhop_gameplay_core::PRACTICE_ARENA);
@@ -202,6 +211,25 @@ pub fn act(game: &mut Playground, action: Action) -> bool {
         Action::Quit => {
             reset(game);
             return true;
+        }
+        Action::Ember => {
+            reset(game);
+            match burnhop_gameplay_core::offline::OfflinePracticeState::new(
+                burnhop_gameplay_core::offline::MapId::EmberRelay,
+            ) {
+                Ok(state) => {
+                    game.map = state.map;
+                    game.world = state.world;
+                    game.combat = state.combat;
+                    game.stance = state.stance;
+                    change(game, Screen::Playing);
+                }
+                Err(error) => {
+                    game.menu.notice =
+                        format!("Ember Relay: {error}. The range remains available.");
+                    change(game, Screen::Error);
+                }
+            }
         }
         Action::Practice => {
             reset(game);
@@ -309,6 +337,7 @@ pub fn controls(session: &Session) -> Vec<(String, Action, bool)> {
     match session.screen {
         Screen::Main => vec![
             item("Practice", Action::Practice),
+            item("Ember Relay Practice / Offline", Action::Ember),
             item("Host Game", Action::Host),
             item("Join Game", Action::Join),
             item("Quit", Action::Quit),
@@ -444,7 +473,7 @@ pub fn setup(mut commands: Commands) {
                     font(12.),
                     TextColor(color(0xe89a70)),
                 ));
-                for index in 0..4 {
+                for index in 0..5 {
                     card.spawn((
                         Control(index),
                         Button,
@@ -592,7 +621,7 @@ pub fn present(
         ),
     >,
     mut brand: Single<
-        (&mut Node, &mut TextFont),
+        (&mut Node, &mut TextFont, &mut Text),
         (
             With<Brand>,
             Without<MenuRoot>,
@@ -644,6 +673,12 @@ pub fn present(
         Display::Flex
     };
     brand.1.font_size = 48.0.into();
+    brand.2.0 = if game.ember() {
+        "BURNHOP\nEMBER RELAY"
+    } else {
+        "BURNHOP\nFIELD RANGE"
+    }
+    .into();
     card.left = if compact {
         px((window.width() - 448.).max(16.) / 2.)
     } else {
@@ -664,11 +699,11 @@ pub fn present(
     let session = &game.menu;
     let items = controls(session);
     let (title, detail) = match session.screen {
-        Screen::Main => (if compact { "BURNHOP / FIELD RANGE" } else { "READY, PILOT?" }, "Boots on. Pick your next drop.".into()),
+        Screen::Main => (if compact { "BURNHOP" } else { "READY, PILOT?" }, "Boots on. Pick your next drop.".into()),
         Screen::Host => ("HOST GAME", format!("Bind IP:port / {}\n{}", match address(&session.editor.text) { Ok(a) if a.ip().is_loopback() => "LOCAL ONLY", Ok(_) => "LAN INTERFACE", Err(_) => "ENTER AN ADDRESS" }, "For friends, enter this Mac/PC's LAN IP. No internet setup.")),
         Screen::Join => ("JOIN GAME", "Server IP:port / numeric IPv4 or [IPv6]:port\nUse the address shared by your host.".into()),
         Screen::Connecting => ("JOINING THE MATCH", format!("Connecting to {}\nYou can cancel safely at any time.", session.address.map_or(String::new(), |a| a.to_string()))),
-        Screen::Paused => (if game.online.is_some() { "MATCH MENU" } else { "PRACTICE PAUSED" }, if game.online.is_some() { format!("Match continues / your controls are released.\n{} / {}/8 players", session.address.map_or(String::new(), |a| a.to_string()), game.online.as_ref().map_or(0, |o| o.actors.iter().flatten().count())) } else { "Take a breather. The range is paused.".into() }),
+        Screen::Paused => (if game.online.is_some() { "MATCH MENU" } else { "PRACTICE PAUSED" }, if game.online.is_some() { format!("Match continues / your controls are released.\n{} / {}/8 players", session.address.map_or(String::new(), |a| a.to_string()), game.online.as_ref().map_or(0, |o| o.actors.iter().flatten().count())) } else { if game.ember() { "Ember Relay / offline paused.".into() } else { "Take a breather. The range is paused.".into() } }),
         Screen::ConfirmStop => ("STOP HOSTING?", "Everyone will disconnect and this match will end.\nYour server's port will be released.".into()),
         Screen::Error => (if session.retry_host { "UNABLE TO HOST" } else { "CONNECTION ENDED" }, "You can edit the address and try again.".into()),
         Screen::Playing => ("", String::new()),
@@ -684,7 +719,14 @@ pub fn present(
                 text.0 = title.into();
                 font.font_size = if compact { 20. } else { 24. }.into();
             }
-            1 => text.0 = detail.clone(),
+            1 => {
+                text.0 = detail.clone();
+                node.display = if compact && session.screen == Screen::Main {
+                    Display::None
+                } else {
+                    Display::Flex
+                };
+            }
             2 => {
                 text.0 = validation.clone();
                 node.display = if validation.is_empty() {
@@ -711,7 +753,7 @@ pub fn present(
             continue;
         };
         node.display = Display::Flex;
-        node.min_height = px(if compact { 32. } else { 36. });
+        node.min_height = px(36.);
         node.padding = UiRect::axes(px(10), px(if compact { 5. } else { 7. }));
         background.0 = color(if !enabled {
             0x293632
