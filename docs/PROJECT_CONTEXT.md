@@ -1,6 +1,6 @@
 # Project context
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
 ## Why this exists
 
@@ -71,7 +71,7 @@ Internet hosting requires connection establishment through NAT/firewalls and pot
 
 ## How to resume
 
-Read this file, the roadmap, `docs/handoffs/09-eight-player-checkpoint.md` and `docs/handoffs/08-eight-player-reliability.md` for current implementation and measured limits. `docs/handoffs/07-visual-checkpoint.md` records the saved visual milestone/CI checkpoint; `06-gameplay-visuals.md` preserves detailed native review evidence and `05-checkpoint.md` preserves the prior checkpoint. Inspect the existing game's movement and map boundaries as needed. The movement milestone implements one arena, a controllable character, jump/jet fuel, rectangular collision, camera and behavior tests. Read `docs/handoffs/04-multiplayer.md` for the direct-connect architecture, actual Mac checks and remaining human/platform checks; `03-combat.md` records the approved practice combat loop; `02-movement.md` records the user's movement approval and earlier evidence. Read `docs/REFERENCE_GAMEPLAY.md` before porting tuning or map data. Do not start with a complete account system or a full port of all cosmetics.
+Read this file, the roadmap, `docs/handoffs/11-menu-hosting-checkpoint.md`, `docs/handoffs/10-menu-and-hosting.md`, `docs/handoffs/09-eight-player-checkpoint.md` and `docs/handoffs/08-eight-player-reliability.md` for current implementation and measured limits. `docs/handoffs/07-visual-checkpoint.md` records the saved visual milestone/CI checkpoint; `06-gameplay-visuals.md` preserves detailed native review evidence and `05-checkpoint.md` preserves the prior checkpoint. Inspect the existing game's movement and map boundaries as needed. The movement milestone implements one arena, a controllable character, jump/jet fuel, rectangular collision, camera and behavior tests. Read `docs/handoffs/04-multiplayer.md` for the direct-connect architecture, actual Mac checks and remaining human/platform checks; `03-combat.md` records the approved practice combat loop; `02-movement.md` records the user's movement approval and earlier evidence. Read `docs/REFERENCE_GAMEPLAY.md` before porting tuning or map data. Do not start with a complete account system or a full port of all cosmetics.
 
 - Compact-HUD review follow-up (2026-09-12): remove the wide `top=82` compact panels, retain short corner readouts and a collapsed F1 guide, and verify actual native traversal/errors at 480 × 320, 800 × 524 and 1280 × 720. This is a HUD-only correction to the approved visual/animation baseline. Final review and separately authorized save/CI come next; no commit or push is authorized here. See the follow-up in milestone 06.
 
@@ -97,3 +97,39 @@ Local checks: 102 tests, strict Clippy, formatting and locked builds. Controlled
 2026-09-12: fresh local formatting, strict Clippy, all 102 workspace tests, locked host/explicit Mac ARM64 builds and dependency-boundary checks pass. No implementation fix or dependency change was needed. Frozen practice fixtures and movement/combat tuning remain intact. Candidate review found one entirely black PNG; its bytes were preserved outside Git and the screenshot index corrected. Eleven useful PNGs and the bounded measurement evidence are included. The recorded 605-second soak was not repeated because no runtime code changed during this checkpoint. See [09-eight-player-checkpoint.md](handoffs/09-eight-player-checkpoint.md) for save status, CI evidence and remaining validation. Manager review is separate from unreported new human approval.
 
 Saved implementation: `437b6b67db0e07e9f237b54d90e90817d5c69748`, normally pushed to `main`. [Native checks 34699835294](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294) passed on macOS ARM64 and Windows x64; both job logs confirm 102 workspace tests, strict Clippy and locked executable builds. No runtime/CI fix was required. This documentation update triggers its own CI; the final checkpoint response must verify that exact SHA separately. New human approval, Windows GPU/hardware, Mac-to-Windows, physical held-input and real internet checks remain pending.
+
+
+## Human localhost playtest approval — 2026-09-12
+
+The user reports completing the manager's two-client Mac checklist and says: “pass just did that and all looks and feels right”. This is user-reported approval of one local Rust server and two native clients connecting to 127.0.0.1:5000: identities/movement/jump/jet, combat/death/respawn/Tab scores, held-input focus recovery, client departure/replacement with fresh scores, and server-shutdown disconnection. No new automated or manager-observed physical playtest is claimed. This supersedes earlier statements that new local human approval was unreported.
+
+The manager independently verified final saved SHA b64d213b1bdcfaa272848926ae9716fdff56c042 against live remote main and GitHub Actions run 34701237678: both macOS ARM64 and Windows x64 passed 102 workspace tests, formatting, Clippy and locked builds. This records the saved code checkpoint's result, not CI for subsequent documentation edits.
+
+Still pending: eight-human feel/spawn fairness, delayed moving-target aiming, held-input cases beyond the supplied local checklist, a second physical machine/LAN test, Windows hardware/GPU, Mac-to-Windows and real internet hosting/reliability. Local server-plus-client operation does not establish internet reachability, a Host Game UI or official India deployment. Preserve the approved gameplay and visuals.
+
+
+## Current milestone 10 — native menus and owned hosting
+
+2026-09-12: built on `b64d213b1bdcfaa272848926ae9716fdff56c042`, preserving the user-reported two-client localhost approval and its existing local documentation edits. No commit, push, deployment or agents are authorized for this milestone. Second-computer/LAN testing is explicitly deferred.
+
+No arguments now opens a styled native Bevy menu with Practice, Host Game, Join Game and Quit. Escape pauses offline practice, but online menus release gameplay intent and keep polling/sending neutral input. Guests leave independently; Stop Hosting requires an explicit confirmation. Failed/cancelled connections can be retried without restarting. Address entry supports the existing numeric IPv4/bracketed IPv6 format, with local-only defaults and explicit LAN-interface binding, no advertised wildcard/internet address. See [handoff 10](handoffs/10-menu-and-hosting.md).
+
+Hosting links the existing workspace server library and owns one standard-library worker thread. The worker runs the existing authoritative server and bounded clock; the host client still connects over UDP. It requires no separate server executable/terminal. Drop requests stop, joins the worker and releases its socket; failed partial startup also cleans up. The standalone headless server remains independent of Bevy. The internal client-to-server path dependency is the only dependency/lockfile change; the core remains dependency-free and gameplay/protocol fixtures are unchanged.
+
+Local formatting, strict Clippy, **111 tests**, locked host/explicit Mac ARM64 builds and dependency boundaries pass. Agent-operated native windows verify host/join, guest leave without host shutdown, fresh joins, confirmed stop/disconnect, same-port rehosting, normal window-close port release, failed-bind/retry, cancellation/timeout/retry, compact/desktop layouts, editable IPv4/IPv6, native IPv6 loopback hosting and menu/focus recovery. The preserved offline native scripted combat route passes all seven checkpoints. Fourteen inspected nonblank PNGs are in [the screenshot index](screenshots/10-menu-and-hosting/README.md).
+
+These are agent-native and automated checks, not new human approval. Final uncommitted changes have not run Windows CI; Windows hardware/GPU, Mac-to-Windows, deferred second-machine LAN, real internet and prior eight-human/latency limitations remain. No long soak was repeated because gameplay, packet format/scheduling and transport reliability did not change. Next: human menu/hosting review, then separately authorized save and exact-SHA CI.
+
+
+## Menu and hosting human approval — 2026-09-13
+
+The user explicitly reports all six manager-requested checks passed on the local Mac setup: Practice pause/resume; Host Game and Join Game; input recovery across menus/focus; guest leave/rejoin; Stop Hosting and same-port rehosting; and usability. This is user-reported hands-on approval of milestone 10, superseding earlier statements that its human review was pending. Preserve this approved behavior and visual baseline.
+
+The manager independently reran 111 tests, formatting, strict Clippy and the locked Mac build successfully during review. New-change Windows CI, Windows hardware/GPU, deferred second-machine LAN, Mac-to-Windows, real internet and eight-human testing remain separate outstanding validation. Next: a separately authorized save and exact-final-SHA macOS/Windows CI checkpoint, then the web-to-native feature inventory. This approval records playtest results; it does not commit or push the changes.
+
+
+## Checkpoint 11 — approved menu and hosting save, CI pending
+
+2026-09-13: the user explicitly authorizes committing and normally pushing milestone 10 to `origin/main`, superseding the earlier task-specific save restrictions. All six human approval notes above are preserved. Fresh checkpoint checks pass formatting, strict Clippy, all 111 tests, locked host and explicit Mac ARM64 workspace builds, independent core/server checks and all-target dependency boundaries. No implementation fix or dependency upgrade was needed; the intended internal client-to-server hosting dependency remains. Core, frozen fixtures, gameplay tuning, codec/prediction, pinned versions and CI workflow are unchanged from `b64d213b1bdcfaa272848926ae9716fdff56c042`.
+
+[Checkpoint 11](handoffs/11-menu-hosting-checkpoint.md) records the reviewed source/tests, fourteen original screenshots, validation and manual CI handoff. Remote CI for this checkpoint is **pending**, including Windows compilation; historical green runs do not validate this commit. The save procedure will locate the exact final pushed SHA's Actions run and hand it to the user without waiting for completion. No watcher, automation or another task is requested. Windows hardware/GPU, second-machine LAN, Mac-to-Windows, real internet and eight-human/latency limitations remain untested. This checkpoint is not fully validated while CI is pending. Next: the user monitors both CI jobs; the web-to-native feature inventory is later work.

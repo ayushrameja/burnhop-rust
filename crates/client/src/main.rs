@@ -3,6 +3,7 @@ mod artwork;
 mod combat_view;
 mod frame_profile;
 mod hud;
+mod menu;
 mod online;
 mod pilot;
 mod playtest;
@@ -26,6 +27,8 @@ use burnhop_gameplay_core::{
 #[derive(Resource)]
 struct Playground {
     online: Option<online::Online>,
+    menu: menu::Session,
+    input_blocked: bool,
     world: GameWorld,
     combat: CombatState,
     feedback: combat_view::Feedback,
@@ -52,6 +55,8 @@ impl Default for Playground {
         let world = GameWorld::new(&PRACTICE_ARENA);
         Self {
             online: None,
+            menu: menu::Session::default(),
+            input_blocked: false,
             previous: world.player,
             world,
             combat: CombatState::default(),
@@ -118,7 +123,16 @@ fn main() {
             }
         }
     }
-    let title = if game.online.is_some() {
+    if let Some(address) = address {
+        game.menu.address = Some(address);
+        game.menu.editor = menu::Editor::new(&address.to_string());
+    } else if !offline && !game.diagnostics && game.route.is_none() && game.combat_route.is_none() {
+        game.menu.screen = menu::Screen::Main;
+        game.input_blocked = true;
+    }
+    let title = if game.menu.screen == menu::Screen::Main {
+        "Burnhop"
+    } else if game.online.is_some() {
         "Burnhop — Direct Connect"
     } else {
         "Burnhop — Combat Practice"
@@ -149,20 +163,24 @@ fn main() {
                 combat_view::setup,
                 hud::setup,
                 scoreboard::setup,
+                menu::setup,
             ),
         )
         .add_systems(
             Update,
             (
+                menu::input,
                 capture_input,
                 combat_view::capture_aim,
                 simulate,
+                session_poll,
                 present,
                 terrain::parallax,
                 pilot::present,
                 combat_view::present,
                 hud::present,
                 scoreboard::present,
+                menu::present,
                 review::capture,
             )
                 .chain(),
@@ -221,6 +239,12 @@ fn capture_input(
                 game.world.tick
             );
         }
+        keyboard.clear();
+        mouse.clear();
+        return;
+    }
+    if game.input_blocked {
+        game.input.clear();
         keyboard.clear();
         mouse.clear();
         return;
@@ -289,7 +313,7 @@ fn simulate(mut game: ResMut<Playground>, time: Res<Time<Real>>) {
         online::simulate(&mut game, time.delta_secs_f64());
         return;
     }
-    if !game.focused {
+    if !game.focused || game.menu.screen != menu::Screen::Playing {
         return;
     }
     let (ticks, alpha) = game.clock.advance(time.delta_secs_f64());
@@ -392,6 +416,10 @@ fn simulate(mut game: ResMut<Playground>, time: Res<Time<Real>>) {
             game.snap_camera = true;
         }
     }
+}
+
+fn session_poll(mut game: ResMut<Playground>) {
+    menu::poll(&mut game);
 }
 
 fn present(

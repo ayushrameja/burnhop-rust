@@ -1,4 +1,5 @@
 //! Headless eight-player authoritative server; the binary only owns the wall clock.
+pub mod owned;
 use burnhop_gameplay_core::*;
 use burnhop_protocol::{
     transport::{config, now},

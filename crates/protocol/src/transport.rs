@@ -48,7 +48,7 @@ impl ConnectionState {
         match self {
             Self::Connecting => "CONNECTING".into(),
             Self::Connected => "CONNECTED".into(),
-            Self::Disconnected(reason) => format!("DISCONNECTED: {reason} - close and join again"),
+            Self::Disconnected(reason) => format!("DISCONNECTED: {reason}"),
             Self::CompatibilityError => {
                 "COMPATIBILITY ERROR - client/server builds must match".into()
             }

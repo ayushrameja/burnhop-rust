@@ -461,7 +461,9 @@ pub fn present(
     >,
 ) {
     let views = actors(&game);
-    let dt = if game.focused || game.online.is_some() {
+    let dt = if (game.focused && game.menu.screen == crate::menu::Screen::Playing)
+        || game.online.is_some()
+    {
         time.delta_secs().min(0.1)
     } else {
         0.

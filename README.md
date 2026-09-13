@@ -1,8 +1,8 @@
 # Burnhop Native
 
-A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. The field range now has an illustrated articulated pilot, distinct weapon artwork, layered terrain, bounded combat effects and a responsive native HUD. A 2–8-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
+A playable native Rust + Bevy combat practice loop for Burnhop: mouse aiming, pistol and M416, reloading, an attacking stationary bot, health, death and respawn, alongside the approved jumping/jet movement and following camera. The field range now has an illustrated articulated pilot, distinct weapon artwork, layered terrain, bounded combat effects and a responsive native HUD. A 2–8-player direct-connect mode now runs the same rules in a headless Rust server, with local movement prediction and remote interpolation. A native main menu now provides Practice, Host Game, Join Game and safe session cleanup. Accounts, matchmaking, internet hosting setup and Go services remain deferred.
 
-Read the latest [eight-player checkpoint](docs/handoffs/09-eight-player-checkpoint.md), [eight-player reliability handoff](docs/handoffs/08-eight-player-reliability.md) and [visual checkpoint](docs/handoffs/07-visual-checkpoint.md), [gameplay visuals handoff](docs/handoffs/06-gameplay-visuals.md), [visual direction](docs/VISUAL_DIRECTION.md), [saved checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
+Read the latest [menu/hosting checkpoint](docs/handoffs/11-menu-hosting-checkpoint.md), [menu and hosting handoff](docs/handoffs/10-menu-and-hosting.md), [eight-player checkpoint](docs/handoffs/09-eight-player-checkpoint.md), [eight-player reliability handoff](docs/handoffs/08-eight-player-reliability.md) and [visual checkpoint](docs/handoffs/07-visual-checkpoint.md), [gameplay visuals handoff](docs/handoffs/06-gameplay-visuals.md), [visual direction](docs/VISUAL_DIRECTION.md), [saved checkpoint](docs/handoffs/05-checkpoint.md), [project context](docs/PROJECT_CONTEXT.md), [roadmap](docs/ROADMAP.md), [browser behavior notes](docs/REFERENCE_GAMEPLAY.md), [multiplayer handoff](docs/handoffs/04-multiplayer.md), [combat handoff](docs/handoffs/03-combat.md), and [movement handoff](docs/handoffs/02-movement.md) (and the earlier [foundation handoff](docs/handoffs/01-foundation.md)). Agents must first read [AGENTS.md](AGENTS.md).
 
 ## Pinned versions and choices
 
@@ -43,7 +43,21 @@ cargo run -p burnhop-client --locked --target x86_64-pc-windows-msvc
 
 Windows x64 is the initial Windows build target. Windows ARM and installers are outside this milestone. Installing a Windows Rust target on a Mac is not equivalent to linking or running a Windows application.
 
-## Offline practice and direct-connect multiplayer
+## Main menu and player hosting
+
+```sh
+cargo run -p burnhop-client --locked
+```
+
+No arguments opens **Practice / Host Game / Join Game / Quit**. Host Game starts an owned instance of the existing Rust server library and connects over ordinary UDP; no separate terminal or previously built server executable is needed. It defaults to `127.0.0.1:5000` (local only). For friends on an already reachable LAN, enter this computer's explicit LAN IP and port instead. Share the exact address shown in the host HUD. Unspecified addresses such as `0.0.0.0` are rejected by the menu; no internet reachability, NAT traversal or firewall changes are implied.
+
+Join Game accepts numeric IPv4 or bracketed IPv6 with a port, has validation and Cancel, and offers Edit & Retry after full-server, compatibility, timeout or disconnect errors. Click the address field to select it, type, or edit with Left/Right, Home/End, Backspace/Delete and Ctrl+A / Cmd+A. Tab / Shift+Tab and Up/Down navigate enabled controls; Enter / Space activate them. No hostname resolution or clipboard paste is implemented.
+
+Escape pauses practice with Resume / Return to Main Menu. Online, Escape opens Resume / Leave Match while simulation continues and your input is neutral. A host instead sees Stop Hosting and a confirmation that everyone will disconnect. Guest departure keeps the server running. Confirmed stop, Quit and normal window close release only the server owned by this client. Repeated sessions do not require relaunching. Release/repress gameplay controls after menu or focus transitions.
+
+See [handoff 10](docs/handoffs/10-menu-and-hosting.md) for ownership details, exact verification limits, the human checklist and [native screenshots](docs/screenshots/10-menu-and-hosting/README.md). All six human menu/hosting checks were approved on 2026-09-13. Fresh local validation passes 111 tests; exact-checkpoint remote CI is pending and handed to the user for monitoring. Windows compilation for this checkpoint and hardware testing remain unverified. See [checkpoint 11](docs/handoffs/11-menu-hosting-checkpoint.md); earlier saved-checkpoint CI is historical evidence only.
+
+## Explicit practice and standalone direct-connect workflows
 
 Build once, then start the server and each client in **separate terminals** from this repository:
 
@@ -59,9 +73,9 @@ cargo run -p burnhop-client --locked -- --connect 127.0.0.1:5000
 
 These commands also work in separate PowerShell terminals on Windows after the setup above; Windows compilation and headless tests have passed in CI; interactive Windows execution is still unverified. On an already reachable LAN, bind an explicit interface address (for example `--bind 192.168.1.20:5000`) and pass that same server address to each client. Numeric IP addresses with ports are required; IPv6 uses `[address]:port`. The recorded agent transport checks exercised localhost; the user-reported multiplayer approval does not specify network conditions. No automatic firewall changes, NAT traversal, relay, room discovery or deployment is included. This uses Netcode's unsecure development authentication; it is a trusted direct-connect milestone, not authenticated public hosting.
 
-All clients need protocol **2** and gameplay **0x4255_524e_0008_0001**. Older two-player builds are incompatible. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. Your pilot has cyan equipment and a YOU label; opponents have ochre equipment and stable P1–P8 labels. Hold **Tab** for identities, kills and deaths; release to close. A ninth player receives a full-server result. There is no online bot. Close a client to leave; a new process can join the freed slot. A disconnected client must be restarted to join again. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
+All clients need protocol **2** and gameplay **0x4255_524e_0008_0001**. Older two-player builds are incompatible. The HUD shows connecting, assigned player, connected, disconnected and compatibility-error states. Your pilot has cyan equipment and a YOU label; opponents have ochre equipment and stable P1–P8 labels. Hold **Tab** for identities, kills and deaths; release to close. A ninth player receives a full-server result. There is no online bot. Use Escape / Leave Match or close the guest window to leave. A freed slot can be joined again, and disconnected clients can edit/retry from the menu without restarting. F5 is ignored online, and losing focus clears input while the match and reload/respawn timers continue.
 
-Offline practice remains the default, or can be selected explicitly:
+Choose Practice from the main menu, or launch it explicitly:
 
 ```sh
 cargo run -p burnhop-client --locked -- --offline
@@ -83,7 +97,8 @@ Protocol 2 uses measured RTT to reserve 6–24 input ticks, bounded by the serve
 | 1 / 2 | Select pistol / M416; changing weapons cancels reload and takes 0.3 s |
 | Tab | Online: hold scoreboard; release or lose focus to close |
 | F5 | Offline only: reset both actors, health, ammunition, fuel, counters and input; release/repress controls afterward |
-| Window close button | Quit |
+| Escape | Practice pause or online match menu; menu input does not enter gameplay |
+| Window close button | Quit and stop any server owned by this client |
 
 Space never activates the jet in this milestone. Holding Space does not repeat jumps. Shift must be released and pressed again after landing or exhaustion; regenerated fuel does not restart a held jet. Both Shift keys share one hold. Losing focus pauses the encounter and clears held/queued input; click back into the window and press controls again. Leaving the window with the cursor stops firing; click again after returning. Invalid cursor positions cannot shoot. Death and respawn also clear controls. Resize freely; the arena/collision dimensions never change.
 
@@ -131,7 +146,7 @@ The tree should contain only `burnhop-gameplay-core`. For an explicit platform b
 ## Layout and boundary
 
 ```text
-crates/client/          Bevy input/adapter, articulated artwork, terrain, camera, effects and HUD
+crates/client/          Bevy session menus/input, articulated artwork, terrain, camera, effects and HUD
 crates/gameplay-core/   Dependency-free actors, movement/combat, 60 Hz ticks and collision
 crates/protocol/        Wire codec, bounded input queues, prediction and Renet client adapter
 crates/server/          Headless authoritative match and bounded server clock

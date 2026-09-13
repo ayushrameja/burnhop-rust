@@ -45,4 +45,11 @@ Top left: compact Burnhop / practice-or-direct-connect identity. Top right: oppo
 
 Use Bevy's existing bundled Fira Mono for clear numeric hierarchy and range-sign lettering. No extra font files. Avoid the old full-width multiline diagnostic slab; technical timing/route diagnostics stay in opt-in logs.
 
-Review is the playable native result. Milestone 08 reuses this direction for eight players and adds a centered held-Tab scoreboard with identity/kills/deaths, readable at the existing 480 × 320 minimum. It closes on release, focus loss or disconnect; ordinary combat retains the short edge HUD. Menus, audio and additional maps remain deferred.
+Review is the playable native result. Milestone 08 reuses this direction for eight players and adds a centered held-Tab scoreboard with identity/kills/deaths, readable at the existing 480 × 320 minimum. It closes on release, focus loss or disconnect; ordinary combat retains the short edge HUD. Native menus are added in milestone 10; audio and additional maps remain deferred.
+
+
+## Native menus — milestone 10
+
+Reuse the approved arena and pilots as a darkened backdrop. Desktop uses left-aligned Burnhop / Field Range branding and a single right-hand action card; compact windows use one inset card with the game identity in its heading. Canvas text, sage framing and dark field-green buttons retain the existing palette and Fira Mono. Hover brightens the fill, press changes it again, and a cyan outline identifies keyboard focus; disabled actions are muted and skipped during navigation. Stationary hover after reflow cannot steal keyboard focus. Use supported plain-text key names instead of missing arrow glyphs.
+
+Address editing, cancellation, retry and host-stop confirmation belong in this card; technical route/frame diagnostics remain opt-in. Offline pause freezes the arena and animations. Online menus dim the ongoing arena and explicitly say the match continues with released input. Compact hosting menus include the actual connection address and player count. [Milestone 10 screenshots](screenshots/10-menu-and-hosting/README.md) record 480 × 320 and 1280 × 720 native checks. The user subsequently approved all six menu/hosting checks, including usability, on 2026-09-13; see the preserved approval addendum in [handoff 10](handoffs/10-menu-and-hosting.md).

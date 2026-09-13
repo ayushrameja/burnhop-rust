@@ -267,11 +267,22 @@ pub fn setup(mut commands: Commands) {
             TextColor(color(CREAM)),
         ));
 }
+fn return_host_label(game: &Playground, count: usize, compact: bool) -> String {
+    let address = game.menu.address.map_or(String::new(), |a| a.to_string());
+    format!(
+        "HOST {address} / {count}/8{}",
+        if compact {
+            " / Esc"
+        } else {
+            "\nEsc Match menu / Tab scores"
+        }
+    )
+}
 fn overlay(game: &Playground) -> String {
     if let Some(o) = &game.online
         && o.network.status.terminal()
     {
-        return format!("{}\nRestart the client to reconnect.", o.label());
+        return format!("{}\nEsc opens the match menu.", o.label());
     }
     if let LifeState::Dead { remaining_ticks } = game.combat.player.life {
         return format!(
@@ -302,6 +313,16 @@ pub fn present(
     mut tracks: Query<&mut Node, TrackFilter>,
 ) {
     let compact = compact_layout(window.width(), window.height());
+    if game.menu.screen != crate::menu::Screen::Playing {
+        help.expanded = false;
+        for (_, _, mut visibility, _) in &mut panels {
+            *visibility = Visibility::Hidden;
+        }
+        return;
+    }
+    for (_, _, mut visibility, _) in &mut panels {
+        *visibility = Visibility::Inherited;
+    }
     help.update(compact, window.focused, keys.just_pressed(KeyCode::F1));
     let player = game.combat.player;
     let w = player.weapon();
@@ -323,32 +344,36 @@ pub fn present(
             Field::Connection => {
                 if let Some(o) = &game.online {
                     let count = o.actors.iter().flatten().count();
-                    let opponent = if count < 2 {
-                        "Waiting for players / Tab".into()
+                    if game.menu.owned.is_some() {
+                        return_host_label(&game, count, compact)
                     } else {
-                        format!("{count}/8 players / Tab scores")
-                    };
-                    if compact {
-                        if o.network.status.terminal() {
-                            "CONNECTION ERROR / see message".into()
-                        } else if !game.focused {
-                            "INPUT RELEASED / click back".into()
-                        } else if let Some(welcome) = o.network.welcome {
-                            format!("P{} / {}", welcome.actor.index() + 1, opponent)
+                        let opponent = if count < 2 {
+                            "Waiting for players / Tab".into()
                         } else {
-                            o.label()
-                        }
-                    } else {
-                        format!(
-                            "{}\n{}{}",
-                            o.label(),
-                            opponent,
-                            if !game.focused {
-                                "\nUnfocused - input released"
+                            format!("{count}/8 players / Tab scores")
+                        };
+                        if compact {
+                            if o.network.status.terminal() {
+                                "CONNECTION ERROR / see message".into()
+                            } else if !game.focused {
+                                "INPUT RELEASED / click back".into()
+                            } else if let Some(welcome) = o.network.welcome {
+                                format!("P{} / {}", welcome.actor.index() + 1, opponent)
                             } else {
-                                ""
+                                o.label()
                             }
-                        )
+                        } else {
+                            format!(
+                                "{}\n{}{}",
+                                o.label(),
+                                opponent,
+                                if !game.focused {
+                                    "\nUnfocused - input released"
+                                } else {
+                                    ""
+                                }
+                            )
+                        }
                     }
                 } else {
                     let bot = if !game.combat.bot.alive() {

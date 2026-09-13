@@ -104,7 +104,8 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
         }
     }
     let scripted = online.scripted();
-    if online.was_focused && !game.focused && !scripted {
+    let active = game.focused && !game.input_blocked;
+    if online.was_focused && !active && !scripted {
         game.input.clear();
         if let Some(prediction) = &mut online.prediction {
             online
@@ -114,7 +115,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
         }
         println!("ONLINE focus lost: input released; server continues");
     }
-    online.was_focused = game.focused;
+    online.was_focused = active;
     // Multiplayer keeps polling and sending neutral commands while unfocused.
     let (ticks, _) = game.clock.advance(elapsed);
     game.alpha = 1.;
@@ -125,7 +126,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
     };
     for _ in 0..ticks {
         if let Some(prediction) = &mut online.prediction {
-            let mut command = if game.focused {
+            let mut command = if active {
                 game.input.command(prediction.next_sequence)
             } else {
                 InputCommand {
@@ -134,6 +135,7 @@ pub fn simulate(game: &mut Playground, elapsed: f64) {
                 }
             };
             if let Some(script) = &mut online.script
+                && !game.input_blocked
                 && !script.complete
             {
                 command = script.command(prediction);

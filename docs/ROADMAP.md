@@ -73,22 +73,38 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 - [x] 605-second eight-client soak: 13 replacement joins, 916 deaths, 906 respawns; no overload and bounded measured resources.
 - [x] Actual Mac native rendering with seven synthetic clients; eight visible pilots, effects, desktop/compact scores, departure/reuse and respawns; offline and two-client regressions.
 - [x] Local 102 tests, formatting, strict Clippy, locked builds and dependency boundaries. Preserve short Mac/Windows CI; long harness stays opt-in.
-- [ ] Human two-to-eight-player spawn fairness, delayed aiming and physical held-input/focus checklist.
+- [x] User-reported two-client localhost Mac playtest: movement/combat/scores, held-input focus recovery, replacement joins and server-shutdown disconnection (2026-09-12).
+- [ ] Eight-human spawn fairness, delayed aiming, and physical-input cases beyond the approved local checklist.
 - [x] Manager review reported no blocking issues; fresh checkpoint checks pass all 102 tests, formatting, strict Clippy, locked builds and dependency boundaries.
 - [x] Save reviewed implementation as `437b6b67db0e07e9f237b54d90e90817d5c69748`; both platform CI jobs pass 102 tests and locked executable builds in [run 34699835294](https://github.com/ayushrameja/burnhop-rust/actions/runs/34699835294).
 - Final checkpoint response must independently verify this documentation commit's exact SHA on both targets; implementation CI is not evidence for later commits.
 - [ ] Windows hardware/GPU and an actual Mac-to-Windows match.
 - [ ] Measure real internet latency/loss and a broader range of hardware before setting capacity/performance expectations.
 
-## 6. Hosting and Go services
+## 6. Native menu and owned hosting
 
-- [ ] Add player-hosted matches and explicit host-departure behavior.
+- [x] No-argument native main menu with Practice, Host Game, Join Game and Quit; mouse/keyboard states and readable 480 × 320 / desktop layouts.
+- [x] Offline Escape pause/resume/return and preserved F5; online Escape menu with neutral input and continuing simulation.
+- [x] Own the existing authoritative server in one worker thread, connect the host over UDP, preserve standalone server and explicit launch/review flags.
+- [x] Numeric address editing/validation, local-only vs explicit LAN binding, connecting/cancel, full/compatibility/timeout/disconnect errors and fresh retry.
+- [x] Guest leave, confirmed Stop Hosting, partial-startup/shutdown cleanup, repeated sessions and port reuse without touching external servers.
+- [x] Agent-operated actual Mac host/guest windows: leave/rejoin/stop/rehost, errors/retry, focus/menu navigation, compact/desktop, IPv6 loopback; preserved offline native combat route passes seven checkpoints.
+- [x] Final 111 tests, formatting, strict Clippy, locked host/Mac ARM64 builds, zero-dependency core, headless boundary, unchanged frozen fixtures and fourteen inspected PNGs. See [handoff 10](handoffs/10-menu-and-hosting.md).
+- [x] Human menu/hosting review: all six checks explicitly approved on 2026-09-13; approval notes below are preserved.
+- [x] Checkpoint save authorized; fresh local validation and reviewed commit contents recorded in [handoff 11](handoffs/11-menu-hosting-checkpoint.md).
+- [ ] Exact-final-SHA remote CI completion: pending, handed to the user for manual monitoring after the authorized push.
+- [ ] Windows compilation of this checkpoint and Windows hardware/GPU checks. Remote CI is pending; historical checkpoint CI is separate.
+- [ ] Second-computer/LAN review is explicitly deferred; internet reachability remains unverified.
+
+## 7. Hosting and Go services
+
+- [x] Local/interface-bound player hosting and explicit host-departure behavior; milestone 10. Internet setup remains separate.
 - [ ] Implement internet connection setup and relay fallback as needed.
 - [ ] Build one small Go room/invite service.
 - [ ] Deploy official match hosting in India when ready and authorized.
 - [ ] Test player hosting from Canadian users' actual connections.
 
-## 7. Expand from playtest evidence
+## 8. Expand from playtest evidence
 
 - [ ] Refine menus, map traversal and spawn fairness from playtests; add audio in a later milestone.
 - [ ] Iterate the first visual scene from user and Windows hardware feedback.
@@ -99,3 +115,21 @@ User decision, 2026-09-12: polish the playable scene now; preserve approved move
 ## Latest handoff
 
 2026-09-12: [09-eight-player-checkpoint.md](handoffs/09-eight-player-checkpoint.md) records the authorized reviewed save, fresh local checks, evidence correction and outstanding validation. [08-eight-player-reliability.md](handoffs/08-eight-player-reliability.md) records the eight-player implementation, protocol/scheduling decisions, controlled packet tests, 605-second soak, actual native review and remaining limits. Manager-reviewed implementation `437b6b6` is normally pushed and green on both CI targets. This documentation commit needs its own exact-SHA check in the final checkpoint response. [07-visual-checkpoint.md](handoffs/07-visual-checkpoint.md) preserves the saved visual/CI baseline; [06-gameplay-visuals.md](handoffs/06-gameplay-visuals.md) preserves the approved art direction and earlier native evidence. Windows hardware, real internet and eight-human feel remain outstanding; final documentation-SHA CI must be verified separately.
+
+
+Latest approval: the user passed the two-client Mac localhost checklist. Final saved SHA `b64d213b1bdcfaa272848926ae9716fdff56c042` was independently verified green on both CI targets in [run 34701237678](https://github.com/ayushrameja/burnhop-rust/actions/runs/34701237678). See the dated approval addendum in [checkpoint 09](handoffs/09-eight-player-checkpoint.md). Next validation: a second physical machine on LAN; Windows hardware and real internet remain separate pending checks.
+
+
+Latest implementation: [10-menu-and-hosting.md](handoffs/10-menu-and-hosting.md), 2026-09-12. The native menu/local hosting milestone is ready for local review with 111 passing tests, actual two-window Mac interaction, preserved native offline route, and fourteen inspected screenshots. No commit/push or new CI run was performed. Preserve the earlier user-approved gameplay/localhost baseline. Next: human menu/hosting review and separately authorized save/CI; second-machine LAN remains deferred.
+
+
+## Menu and hosting human approval — 2026-09-13
+
+The user explicitly reports all six manager-requested checks passed on the local Mac setup: Practice pause/resume; Host Game and Join Game; input recovery across menus/focus; guest leave/rejoin; Stop Hosting and same-port rehosting; and usability. This is user-reported hands-on approval of milestone 10, superseding earlier statements that its human review was pending. Preserve this approved behavior and visual baseline.
+
+The manager independently reran 111 tests, formatting, strict Clippy and the locked Mac build successfully during review. New-change Windows CI, Windows hardware/GPU, deferred second-machine LAN, Mac-to-Windows, real internet and eight-human testing remain separate outstanding validation. Next: a separately authorized save and exact-final-SHA macOS/Windows CI checkpoint, then the web-to-native feature inventory. This approval records playtest results; it does not commit or push the changes.
+
+
+## Current checkpoint and next action — 2026-09-13
+
+[11-menu-hosting-checkpoint.md](handoffs/11-menu-hosting-checkpoint.md) supersedes the historical next-action statements above: human menu/hosting review passed all six checks, and the user now authorizes commit and normal push to `origin/main`. Fresh formatting, strict Clippy, 111 tests, locked host/Mac ARM64 builds and dependency boundaries pass; no implementation fix was needed. All approval notes and prior evidence are preserved. Remote macOS ARM64 and Windows x64 CI remains **pending** for the final pushed SHA. The user will monitor the exact Actions run; stop after handoff without polling for completion. This is not a fully validated checkpoint until its own CI results are known. Windows hardware, deferred second-machine LAN, Mac-to-Windows, real internet and eight-human testing remain separate. The later feature inventory is outside this save task.

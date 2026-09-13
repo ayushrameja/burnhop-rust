@@ -55,3 +55,12 @@ The documentation commit recording these results also triggers the full workflow
 - No hit rewind, public authentication, automatic reconnect, NAT/relay or hosting was introduced; no fairness, frame-rate or general capacity guarantee is established.
 
 Next: finish exact-final-commit CI and remote synchronization, then collect the remaining human/hardware/network evidence before changing approved tuning.
+
+
+## Human localhost playtest approval — 2026-09-12
+
+The user reports completing the manager's two-client Mac checklist and says: “pass just did that and all looks and feels right”. This is user-reported approval of one local Rust server and two native clients connecting to 127.0.0.1:5000: identities/movement/jump/jet, combat/death/respawn/Tab scores, held-input focus recovery, client departure/replacement with fresh scores, and server-shutdown disconnection. No new automated or manager-observed physical playtest is claimed. This supersedes earlier statements that new local human approval was unreported.
+
+The manager independently verified final saved SHA b64d213b1bdcfaa272848926ae9716fdff56c042 against live remote main and GitHub Actions run 34701237678: both macOS ARM64 and Windows x64 passed 102 workspace tests, formatting, Clippy and locked builds. This records the saved code checkpoint's result, not CI for subsequent documentation edits.
+
+Still pending: eight-human feel/spawn fairness, delayed moving-target aiming, held-input cases beyond the supplied local checklist, a second physical machine/LAN test, Windows hardware/GPU, Mac-to-Windows and real internet hosting/reliability. Local server-plus-client operation does not establish internet reachability, a Host Game UI or official India deployment. Preserve the approved gameplay and visuals.

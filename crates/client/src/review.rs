@@ -36,7 +36,9 @@ pub fn capture(
     let Some(dir) = state.directory.clone() else {
         return;
     };
-    if game.world.tick < 10 || state.frames < 60 {
+    if (game.world.tick < 10 && game.menu.screen == crate::menu::Screen::Playing)
+        || state.frames < 60
+    {
         return;
     }
     let p = game.world.player;
@@ -47,6 +49,22 @@ pub fn capture(
         "practice"
     };
     let candidates = [
+        ("menu-main", game.menu.screen == crate::menu::Screen::Main),
+        ("menu-host", game.menu.screen == crate::menu::Screen::Host),
+        ("menu-join", game.menu.screen == crate::menu::Screen::Join),
+        (
+            "menu-connecting",
+            game.menu.screen == crate::menu::Screen::Connecting,
+        ),
+        (
+            "menu-paused",
+            game.menu.screen == crate::menu::Screen::Paused,
+        ),
+        (
+            "menu-confirm-stop",
+            game.menu.screen == crate::menu::Screen::ConfirmStop,
+        ),
+        ("menu-error", game.menu.screen == crate::menu::Screen::Error),
         (
             "scoreboard",
             game.online.is_some()

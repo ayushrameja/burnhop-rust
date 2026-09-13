@@ -58,7 +58,8 @@ pub fn present(
     board.1.display = Display::None;
     // Explicit renderer inspection only; ordinary Tab still releases on focus loss.
     let scripted_tab = std::env::var_os("BURNHOP_REVIEW_TAB").is_some();
-    if (scripted_tab || (window.focused && keys.pressed(KeyCode::Tab)))
+    if game.menu.screen == crate::menu::Screen::Playing
+        && (scripted_tab || (window.focused && keys.pressed(KeyCode::Tab)))
         && let Some(online) = &game.online
         && !online.network.status.terminal()
         && let Some(snapshot) = online.prediction.as_ref().and_then(|p| p.latest)

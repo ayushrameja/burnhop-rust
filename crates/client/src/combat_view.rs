@@ -180,7 +180,7 @@ pub fn capture_aim(
     {
         return;
     }
-    let point = if game.focused {
+    let point = if game.focused && !game.input_blocked {
         window
             .cursor_position()
             .and_then(|cursor| cursor_world(camera.0, camera.1, cursor, window.size()))
@@ -199,7 +199,9 @@ pub fn present(
     mut effects: Query<(&Effect, &mut Sprite, &mut Transform, &mut Visibility)>,
     mut reticle: Single<(&mut Node, &mut Visibility), ReticleFilter>,
 ) {
-    let dt = if game.focused || game.online.is_some() {
+    let dt = if (game.focused && game.menu.screen == crate::menu::Screen::Playing)
+        || game.online.is_some()
+    {
         time.delta_secs().min(0.1)
     } else {
         0.
@@ -250,6 +252,7 @@ pub fn present(
         *visible = Visibility::Visible;
     }
     if game.focused
+        && !game.input_blocked
         && game.input.aim_at.is_some()
         && game.combat.player.alive()
         && let Some(cursor) = window.cursor_position()

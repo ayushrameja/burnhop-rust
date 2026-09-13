@@ -1405,6 +1405,7 @@ dependencies = [
  "bevy",
  "burnhop-gameplay-core",
  "burnhop-protocol",
+ "burnhop-server",
 ]
 
 [[package]]
