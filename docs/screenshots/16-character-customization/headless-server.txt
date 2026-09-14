@@ -1,0 +1,3 @@
+    Checking burnhop-protocol v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/protocol)
+    Checking burnhop-server v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/server)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 0.96s

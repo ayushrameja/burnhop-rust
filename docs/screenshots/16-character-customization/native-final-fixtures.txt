@@ -1,0 +1,12 @@
+CHARACTER FIXTURE 01-field-right-aim saved=Appearance([2, 1, 2, 1, 1, 0, 0, 0]) draft=Appearance([2, 1, 2, 1, 1, 0, 0, 0])
+CHARACTER FIXTURE 02-field-left-crouch saved=Appearance([2, 1, 2, 1, 1, 0, 0, 0]) draft=Appearance([2, 1, 2, 1, 1, 0, 0, 0])
+CHARACTER FIXTURE 03-scout-right-jet saved=Appearance([3, 5, 3, 3, 0, 1, 3, 1]) draft=Appearance([3, 5, 3, 3, 0, 1, 3, 1])
+CHARACTER FIXTURE 04-scout-left-reload saved=Appearance([3, 5, 3, 3, 0, 1, 3, 1]) draft=Appearance([3, 5, 3, 3, 0, 1, 3, 1])
+CHARACTER FIXTURE 05-scout-right-death saved=Appearance([3, 5, 3, 3, 0, 1, 3, 1]) draft=Appearance([3, 5, 3, 3, 0, 1, 3, 1])
+CHARACTER FIXTURE 06-base-left-aim saved=Appearance([1, 1, 2, 1, 0, 0, 0, 5]) draft=Appearance([1, 1, 2, 1, 0, 0, 0, 5])
+CHARACTER FIXTURE 07-compact-field-preview saved=Appearance([1, 1, 2, 1, 0, 0, 0, 5]) draft=Appearance([2, 1, 2, 1, 1, 0, 0, 0])
+CHARACTER FIXTURE 08-compact-save-error saved=Appearance([1, 1, 2, 1, 0, 0, 0, 5]) draft=Appearance([3, 2, 3, 2, 2, 1, 1, 1])
+CHARACTER FIXTURE 09-desktop-beret-preview saved=Appearance([1, 1, 2, 1, 0, 0, 0, 5]) draft=Appearance([1, 1, 2, 1, 3, 0, 0, 5])
+CHARACTER FIXTURE 10-desktop-base-preview saved=Appearance([1, 1, 2, 1, 0, 0, 0, 5]) draft=Appearance([1, 1, 2, 1, 0, 0, 0, 5])
+CHARACTER FIXTURES complete: 10 injected native frames; no human approval
+2026-09-14T10:52:04.970226Z  WARN bevy_winit::state: Skipped event Destroyed for unknown winit Window Id WindowId(37184979584)

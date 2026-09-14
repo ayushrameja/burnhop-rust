@@ -28,12 +28,12 @@ pub fn motion(p: Player, alive: bool) -> Motion {
     }
 }
 #[derive(Clone, Copy)]
-struct ActorView {
-    movement: Player,
-    combat: Combatant,
-    present: bool,
-    generation: u64,
-    deaths: u32,
+pub(crate) struct ActorView {
+    pub(crate) movement: Player,
+    pub(crate) combat: Combatant,
+    pub(crate) present: bool,
+    pub(crate) generation: u64,
+    pub(crate) deaths: u32,
 }
 fn actors(game: &Playground) -> [ActorView; core::MAX_PLAYERS] {
     let mut views = [ActorView {
@@ -86,7 +86,7 @@ fn actors(game: &Playground) -> [ActorView; core::MAX_PLAYERS] {
     views
 }
 #[derive(Clone, Copy)]
-enum Part {
+pub(crate) enum Part {
     Pack,
     FarThigh,
     FarShin,
@@ -112,7 +112,7 @@ enum Part {
     Health,
     Marker,
 }
-const PARTS: [Part; 24] = [
+pub(crate) const PARTS: [Part; 24] = [
     Part::Pack,
     Part::FarThigh,
     Part::FarShin,
@@ -146,18 +146,25 @@ pub struct PilotPart {
 #[derive(Component)]
 pub struct PilotLabel(usize);
 #[derive(Clone, Copy, Default)]
-struct Animator {
+pub(crate) struct Animator {
     last: Option<Vec2>,
     phase: f32,
-    age: f32,
-    death: f32,
+    pub(crate) age: f32,
+    pub(crate) death: f32,
     alive: bool,
-    present: bool,
-    generation: u64,
-    deaths: u32,
+    pub(crate) present: bool,
+    pub(crate) generation: u64,
+    pub(crate) deaths: u32,
     epoch: u64,
 }
 impl Animator {
+    pub(crate) fn preview(age: f32, dead: bool) -> Self {
+        Self {
+            age,
+            death: if dead { 0.24 } else { 0. },
+            ..Default::default()
+        }
+    }
     fn advance(&mut self, view: ActorView, epoch: u64, dt: f32) -> bool {
         let pos = Vec2::new(view.movement.body.x as f32, view.movement.body.y as f32);
         let changed = self.present != view.present
@@ -192,14 +199,14 @@ impl Animator {
 #[derive(Resource, Default)]
 pub struct Animation([Animator; core::MAX_PLAYERS]);
 #[derive(Clone, Copy)]
-struct Draw {
-    at: Vec2,
-    angle: f32,
-    scale: Vec2,
-    tile: Tile,
-    visible: bool,
-    tint: Color,
-    z: f32,
+pub(crate) struct Draw {
+    pub(crate) at: Vec2,
+    pub(crate) angle: f32,
+    pub(crate) scale: Vec2,
+    pub(crate) tile: Tile,
+    pub(crate) visible: bool,
+    pub(crate) tint: Color,
+    pub(crate) z: f32,
 }
 impl Draw {
     fn new(at: Vec2, tile: Tile, z: f32) -> Self {
@@ -284,7 +291,7 @@ pub fn setup(
 fn pose(view: ActorView, anim: Animator, part: Part) -> Draw {
     pose_in(view, anim, part, &core::PRACTICE_ARENA)
 }
-fn pose_in(view: ActorView, anim: Animator, part: Part, arena: &core::Arena) -> Draw {
+pub(crate) fn pose_in(view: ActorView, anim: Animator, part: Part, arena: &core::Arena) -> Draw {
     let p = view.movement;
     let c = view.combat;
     let state = motion(p, c.alive());
@@ -472,6 +479,7 @@ pub fn present(
     mut game: ResMut<Playground>,
     time: Res<Time<Real>>,
     art: Res<Artwork>,
+    custom: Res<crate::character::CustomArt>,
     mut animation: ResMut<Animation>,
     mut parts: Query<(&PilotPart, &mut Sprite, &mut Transform, &mut Visibility)>,
     mut labels: Query<
@@ -501,7 +509,20 @@ pub fn present(
         } else {
             Visibility::Hidden
         };
-        *sprite = art.sprite(d.tile);
+        let artwork = if crate::character::uses_saved(&game, part.actor) {
+            &custom.saved
+        } else {
+            &art
+        };
+        let tile = if matches!(
+            part.part,
+            Part::FarUpper | Part::FarFore | Part::NearUpper | Part::NearFore
+        ) {
+            Tile::Sleeve
+        } else {
+            d.tile
+        };
+        *sprite = artwork.sprite(tile);
         sprite.color = d.tint;
         let base = Vec2::new(
             (view.movement.body.x + 18.) as f32,

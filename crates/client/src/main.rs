@@ -1,5 +1,9 @@
 mod adapter;
+mod appearance;
 mod artwork;
+mod character;
+#[cfg(debug_assertions)]
+mod character_review;
 mod combat_view;
 mod ember_review;
 mod ember_routes;
@@ -35,6 +39,7 @@ struct Playground {
     recovery_tick: Option<u64>,
     ember_review: Option<ember_review::Review>,
     menu: menu::Session,
+    appearance: appearance::Editor,
     input_blocked: bool,
     world: GameWorld,
     combat: CombatState,
@@ -74,6 +79,7 @@ impl Default for Playground {
             recovery_tick: None,
             ember_review: None,
             menu: menu::Session::default(),
+            appearance: Default::default(),
             input_blocked: false,
             previous: world.player,
             world,
@@ -95,7 +101,10 @@ impl Default for Playground {
     }
 }
 fn main() {
-    let mut game = Playground::default();
+    let mut game = Playground {
+        appearance: appearance::Editor::startup(),
+        ..Default::default()
+    };
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut address = None;
     let mut offline = false;
@@ -191,7 +200,7 @@ fn main() {
                 setup,
                 terrain::setup,
                 terrain::setup_ember,
-                pilot::setup,
+                (pilot::setup, character::setup).chain(),
                 combat_view::setup,
                 hud::setup,
                 scoreboard::setup,
@@ -206,10 +215,14 @@ fn main() {
                 combat_view::capture_aim,
                 simulate,
                 session_poll,
+                #[cfg(debug_assertions)]
+                character_review::fixtures,
                 present,
                 terrain::show_map,
                 terrain::parallax,
+                character::refresh,
                 pilot::present,
+                character::present,
                 combat_view::present,
                 hud::present,
                 scoreboard::present,

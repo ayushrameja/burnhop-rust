@@ -419,3 +419,79 @@ fn menu_entity_pool_is_constant_through_repeated_screen_and_session_transitions(
         }
     }
 }
+
+#[test]
+fn character_keyboard_apply_cancel_defaults_and_focus_isolation() {
+    use bevy::{input::mouse::MouseButtonInput, window::WindowFocused};
+    let mut app = App::new();
+    let mut game = Playground::default();
+    let dir = std::env::temp_dir().join(format!("burnhop-character-menu-{}", std::process::id()));
+    let path = dir.join("appearance.conf");
+    game.appearance.path = Ok(path.clone());
+    act(&mut game, Action::Character);
+    app.insert_resource(game)
+        .init_resource::<ButtonInput<KeyCode>>()
+        .add_message::<KeyboardInput>()
+        .add_message::<MouseButtonInput>()
+        .add_message::<WindowFocused>()
+        .add_message::<AppExit>()
+        .add_systems(Startup, setup)
+        .add_systems(Update, (input, crate::capture_input).chain());
+    let window = app
+        .world_mut()
+        .spawn((
+            Window {
+                focused: true,
+                ..default()
+            },
+            PrimaryWindow,
+        ))
+        .id();
+    let send = |app: &mut App, code| {
+        let mut key = event(code, None);
+        key.window = window;
+        app.world_mut().write_message(key);
+        app.update();
+    };
+    app.update();
+    send(&mut app, KeyCode::Tab);
+    send(&mut app, KeyCode::ArrowRight);
+    assert_eq!(
+        app.world().resource::<Playground>().appearance.draft,
+        crate::appearance::Appearance::preset(1)
+    );
+    app.world_mut().get_mut::<Window>(window).unwrap().focused = false;
+    send(&mut app, KeyCode::ArrowRight);
+    assert_eq!(
+        app.world().resource::<Playground>().appearance.draft,
+        crate::appearance::Appearance::preset(1)
+    );
+    app.world_mut().get_mut::<Window>(window).unwrap().focused = true;
+    send(&mut app, KeyCode::Escape);
+    assert!(!path.exists());
+    let mut g = app.world_mut().resource_mut::<Playground>();
+    assert_eq!(g.appearance.saved, g.appearance.draft);
+    act(&mut g, Action::Character);
+    act(&mut g, Action::CharacterValue);
+    act(&mut g, Action::CharacterApply);
+    assert_eq!(g.menu.screen, Screen::Main);
+    assert_eq!(
+        crate::appearance::load(&path).unwrap(),
+        crate::appearance::Appearance::preset(1)
+    );
+    act(&mut g, Action::Character);
+    act(&mut g, Action::CharacterDefaults);
+    assert_ne!(g.appearance.draft, g.appearance.saved);
+    act(&mut g, Action::Cancel);
+    assert_eq!(g.appearance.draft, g.appearance.saved);
+    act(&mut g, Action::Character);
+    g.appearance.path = Ok(path.join("impossible"));
+    act(&mut g, Action::CharacterDefaults);
+    act(&mut g, Action::CharacterApply);
+    assert_eq!(g.menu.screen, Screen::Character);
+    assert!(g.appearance.message.contains("Previous appearance kept"));
+    assert_eq!(g.appearance.saved, crate::appearance::Appearance::preset(1));
+    let cmd = g.input.command(0);
+    assert!(!cmd.fire_held && !cmd.jump_pressed && !cmd.jet_held);
+    std::fs::remove_dir_all(dir).unwrap();
+}

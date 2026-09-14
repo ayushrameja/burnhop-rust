@@ -1,6 +1,6 @@
 # Project context
 
-Last updated: 2026-09-13
+Last updated: 2026-09-14
 
 ## Why this exists
 
@@ -71,7 +71,7 @@ Internet hosting requires connection establishment through NAT/firewalls and pot
 
 ## How to resume
 
-Current continuation: the user authorized saving the approved offline Ember Relay milestone to `origin/main` and handing CI monitoring over to them. This checkpoint saves the exact approved geometry/tuning, both P3 fixes, inventory/design documents, handoffs and useful evidence. Read [checkpoint 15](handoffs/15-ember-relay-checkpoint.md), [review 14](handoffs/14-ember-relay-review.md) and [implementation 13](handoffs/13-ember-relay-offline.md). The user reports “it is working great”; independent review found no blockers. Unchanged-code validation remains applicable: 135 tests, frozen 12,000-command regression, strict Clippy and locked Mac builds; fresh formatting and source/documentation diff checks pass (two original console captures retain final blank lines; see handoff 15). **New exact-SHA remote CI is pending; the user will monitor macOS ARM64 and Windows x64.** No completion wait or background monitoring is authorized. Hardware/LAN/internet validation remains separate.
+Current continuation: save the reviewed offline character-customization milestone to `origin/main` and hand exact-SHA CI monitoring to the user. The user says “looks good”: visual approval only; individual persistence, lifecycle, physical-input and online checklist items are not separately claimed. The manager independently passed 142 tests, formatting, strict Clippy and the locked Mac build, as reported in the checkpoint brief. Read [checkpoint 17](handoffs/17-character-customization-checkpoint.md), [handoff 16](handoffs/16-character-customization.md) and its [evidence index](screenshots/16-character-customization/README.md). The current request authorizes commits and normal pushes, superseding earlier milestone-specific save restrictions. New remote CI is pending; the user monitors both targets for the final SHA. Preserve offline-only customization, online baseline, approved geometry/gameplay and frozen fixtures. No agents, watchers, deployment or completion polling. Prior checkpoint CI for `8a13d129226dbaab80cb2b5775bf8caa78bc39f7` is reported passing and does not establish this milestone's CI.
 
 Read this file, the roadmap, `docs/handoffs/11-menu-hosting-checkpoint.md`, `docs/handoffs/10-menu-and-hosting.md`, `docs/handoffs/09-eight-player-checkpoint.md` and `docs/handoffs/08-eight-player-reliability.md` for current implementation and measured limits. `docs/handoffs/07-visual-checkpoint.md` records the saved visual milestone/CI checkpoint; `06-gameplay-visuals.md` preserves detailed native review evidence and `05-checkpoint.md` preserves the prior checkpoint. Inspect the existing game's movement and map boundaries as needed. The movement milestone implements one arena, a controllable character, jump/jet fuel, rectangular collision, camera and behavior tests. Read `docs/handoffs/04-multiplayer.md` for the direct-connect architecture, actual Mac checks and remaining human/platform checks; `03-combat.md` records the approved practice combat loop; `02-movement.md` records the user's movement approval and earlier evidence. Read `docs/REFERENCE_GAMEPLAY.md` before porting tuning or map data. Do not start with a complete account system or a full port of all cosmetics.
 
@@ -195,3 +195,17 @@ No further repeat Mac offline playtest is required before saving on current evid
 The user explicitly authorizes a normal commit/push to `git@github.com:ayushrameja/burnhop-rust.git` on `main`, superseding prior milestone-specific save restrictions. [Handoff 15](handoffs/15-ember-relay-checkpoint.md) records saved scope, the offline approval, no-blocker review, both completed P3 fixes and unchanged-code validation. Freshly fetched remote main matched local `7e9610a` before saving. No runtime/test changes were needed during saving; all implementation, design/history and 22 useful native screenshots are preserved, including bounded historical diagnostic logs. Final SHA, live remote synchronization and the exact Actions run are reported at task handoff.
 
 Remote CI remains pending in this committed record. The user monitors `aarch64-apple-darwin` and `x86_64-pc-windows-msvc`; only both successful jobs for the final SHA clear CI. No agents, watchers, deployment or repeated CI polling. No additional Mac human playtest is required; Windows hardware/GPU, second-machine LAN, Mac-to-Windows, internet and eight-human validation remain separate. Historical rejected-packet attribution stays qualified.
+
+
+## Milestone 16 — offline character customization (2026-09-14)
+
+Character uses native Bevy UI, shared live articulated preview, Apply/Cancel/Restore Defaults, and a separate saved/draft appearance. Approved original plus Base/Field/Scout adaptations; six skin/hair colors, four hairstyles/headgear choices and eight headgear/top/trouser palettes. Base is a native active-part recipe; Field/Scout adapt active web outfits and retain selected skin/hair. No full catalog, body sizing or online appearance parity.
+
+Version 1 configuration lives outside the repository in per-user application data; bounded reads, whitelist validation and same-directory safe replacement protect the previous save. Three bounded atlas handles (baseline/saved/draft), reused preview/pilot entities and the same pose builder. Offline actor zero uses saved artwork; bots and all online slots retain approved identity/art. Core, geometry, protocol, server, tuning, dependencies and frozen regression remain unchanged. [Handoff 16](handoffs/16-character-customization.md) documents exact catalog, paths, native/scripted evidence, limitations and the short human checklist. No new human approval or Windows hardware/CI is inferred.
+
+
+## Checkpoint 17 — character visual approval and save (2026-09-14)
+
+The user reviewed the result and said “looks good”. This supersedes milestone 16's historical unreported visual-approval status; it does not assert completion of each persistence, lifecycle, online or physical-input checklist item. The manager independently passed 142 tests, formatting, strict Clippy and a locked Mac build according to the current brief. Saving changes documentation only; reviewed source/tests and existing evidence are preserved. The canceled combat-script attempt remains incomplete evidence.
+
+[Checkpoint 17](handoffs/17-character-customization-checkpoint.md) records scope, reused validation and manual CI ownership. New remote CI remains pending until both `aarch64-apple-darwin` and `x86_64-pc-windows-msvc` pass for the exact final pushed SHA. The final task response supplies that SHA and its run link. Windows hardware/GPU, second-machine LAN, Mac-to-Windows and internet remain separately unverified.

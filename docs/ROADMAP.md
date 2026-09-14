@@ -1,6 +1,6 @@
 # Roadmap
 
-Current continuation (2026-09-13): save the user-approved and independently reviewed offline Ember Relay milestone to `origin/main`; both P3 fixes are complete. See [checkpoint 15](handoffs/15-ember-relay-checkpoint.md). **New remote CI is pending; the user will monitor the exact final SHA on macOS ARM64 and Windows x64.** No completion wait, repeated polling or background watcher. Windows hardware/LAN/internet validation remains separate.
+Current continuation (2026-09-14): save the reviewed, visually approved offline character-customization milestone to `origin/main`; see [checkpoint 17](handoffs/17-character-customization-checkpoint.md). **New remote CI is pending; the user monitors the exact final SHA on macOS ARM64 and Windows x64.** Locate the run briefly, then hand off without completion waits, repeated polling, watchers or additional tasks. Windows hardware/LAN/internet remain separate.
 
 ## Completed
 
@@ -216,3 +216,28 @@ No collision-geometry or approved tuning correction was necessary. User playtest
 - [x] Record saved scope and manual CI handoff in [handoff 15](handoffs/15-ember-relay-checkpoint.md); the normal push starts the existing Native checks workflow. Final task response verifies pushed SHA, live remote equality and exact run association.
 - [ ] User to monitor both `aarch64-apple-darwin` and `x86_64-pc-windows-msvc` for the final SHA. Remote CI is pending in this commit; both jobs must pass before marking it cleared.
 - [ ] Windows hardware/GPU, second-machine LAN, Mac-to-Windows, real internet and eight-human validation remain separate. No repeat Mac offline human playtest required for this save.
+
+
+## Milestone 16 — detailed pilot and local Character screen (2026-09-14)
+
+- [x] Inspect active web renderer/creator/catalog usage; record exact subset and Base-versus-active-outfit distinction.
+- [x] Add procedural head/hair/face, clothing/equipment and limb detail, preserving approved original preset, articulated rig and gameplay dimensions.
+- [x] Native Character menu, large shared-pose preview, mouse/keyboard controls and compact layout; Apply/Cancel/Restore Defaults with independent draft state.
+- [x] Per-user versioned bounded configuration, catalog/color validation and safe replacement; failures preserve saved choices.
+- [x] Offline range/Ember integration through lifecycle/reset/menu/restart; bots and all eight online pilots remain baseline. No protocol/server/core changes.
+- [x] 142 tests, unchanged 12,000-command regression, strict Clippy, formatting, locked host and explicit Mac ARM64 builds. Inspected ordinary native UI/restart/Host/Join and eight-slot synthetic-peer rendering; debug pose fixtures separately identified. No completed native combat-script claim after focus cancellation.
+- [x] [Handoff 16](handoffs/16-character-customization.md), [screenshot index](screenshots/16-character-customization/README.md), supported catalog and human checklist.
+- [x] User visual approval: “looks good” (2026-09-14). This does not establish separate completion of persistence, lifecycle, online or physical-input checklist items. Checkpoint 17 authorizes commit/normal push and brief CI run lookup; Windows hardware and current-change CI remain separate.
+- [ ] Remaining web catalog, named looks, Heavy, body/face editor, online appearance metadata and other backend work remain out of scope.
+
+Baseline update from the current user brief: both Mac ARM64 and Windows x64 checkpoint CI jobs passed 135 tests for `8a13d129226dbaab80cb2b5775bf8caa78bc39f7`. This is reported checkpoint evidence, not newly monitored CI or CI for milestone 16.
+
+
+## Milestone 17 — character customization save and manual CI handoff (2026-09-14)
+
+- [x] Record user visual approval and manager-reported independent 142-test, formatting, strict Clippy and locked Mac-build passes. Preserve handoff 16 and all evidence qualifications.
+- [x] Fetch and inspect `main`: live remote and local baseline both `8a13d129226dbaab80cb2b5775bf8caa78bc39f7`, with no incoming work. Review source/tests/docs, 24 useful PNGs and bounded logs; exclude personal appearance, secrets, temporary and build output.
+- [x] Reuse unchanged-code validation; fresh formatting, whitespace, protected-boundary and screenshot-integrity checks pass. No runtime fix or gameplay/network rerun needed.
+- [x] Prepare [checkpoint 17](handoffs/17-character-customization-checkpoint.md) for authorized normal commit/push. Final task response verifies saved SHA, live remote equality, working-tree status and exact Actions run association.
+- [ ] New remote CI: user to monitor `aarch64-apple-darwin` and `x86_64-pc-windows-msvc` for the exact final SHA. Both must pass before clearing this gate; no Windows success is assumed.
+- [ ] Windows hardware/GPU, second-machine LAN, Mac-to-Windows, real internet and unreported human checklist items remain separate.

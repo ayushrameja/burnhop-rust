@@ -1,0 +1,2 @@
+   Compiling burnhop-client v0.1.0 (/Users/ayushrameja/codebase/LHP/burnhop-native/crates/client)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 2.87s

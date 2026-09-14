@@ -1,0 +1,14 @@
+2026-09-14T10:55:04.218102Z  INFO bevy_render::renderer: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: true }
+2026-09-14T10:55:04.371597Z  INFO bevy_winit::system: Creating new window Burnhop (64v0)
+2026-09-14T10:55:04.572016Z  INFO bevy_render::batching::gpu_preprocessing: GPU preprocessing is fully supported on this device.
+VISUAL viewport=1280x720 scale=1
+VISUAL capture=menu-main tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=spawn tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=manual-01 tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=manual-02 tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL viewport=480x320 scale=1
+VISUAL capture=small tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+VISUAL capture=manual-03 tick=0 actor=None local=Player { body: Rect { x: 390.0, y: 1152.0, width: 36.0, height: 68.0 }, velocity: Vec2 { x: 0.0, y: 0.0 }, grounded: true, coyote_ticks: 8, jump_buffer_ticks: 0, fuel: 100.0, fuel_delay_ticks: 0, thrust_latched: false, thrusting: false } remote=Alive
+2026-09-14T10:56:05.149831Z  INFO bevy_window::system: No windows are open, exiting
+2026-09-14T10:56:05.149906Z  INFO bevy_winit::system: Closing window 64v0
+2026-09-14T10:56:05.150334Z  WARN bevy_winit::state: Skipped event Destroyed for unknown winit Window Id WindowId(52780941952)

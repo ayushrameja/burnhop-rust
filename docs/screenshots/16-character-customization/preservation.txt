@@ -1,0 +1,10 @@
+Baseline HEAD: 8a13d129226dbaab80cb2b5775bf8caa78bc39f7
+Unchanged against HEAD: Cargo.toml, Cargo.lock, rust-toolchain.toml, crates/gameplay-core, crates/protocol, crates/server, crates/client/Cargo.toml, crates/client/src/terrain.rs, crates/client/src/online.rs
+Core dependencies: none
+Frozen fixture SHA-256:
+f8237bdbd6f3083b34fbfabe14934824d7756249736baa33ce7671bb84f709ea  crates/gameplay-core/tests/fixtures/approved_practice/collision.rs
+b496155cbc89f75731143a789a946d34955510d2acea9840ec597346e11aa4e4  crates/gameplay-core/tests/fixtures/approved_practice/combat.rs
+0f6cd62ace1e02e39072769c10155a78e52766261a6d5cef1156fe08527cec30  crates/gameplay-core/tests/fixtures/approved_practice/lib.rs
+Formatting: cargo fmt --all -- --check passed
+Whitespace: git diff --check passed
+Native screenshot checks: PNG signature, nonzero dimensions; lossless RGB source byte count verified during conversion.

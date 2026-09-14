@@ -12,6 +12,7 @@ use std::net::SocketAddr;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Screen {
     Main,
+    Character,
     Host,
     Join,
     Connecting,
@@ -23,6 +24,13 @@ pub enum Screen {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
+    Character,
+    CharacterField,
+    CharacterValue,
+    CharacterFacing,
+    CharacterPose,
+    CharacterApply,
+    CharacterDefaults,
     Practice,
     Ember,
     Host,
@@ -46,6 +54,7 @@ pub struct Session {
     pub address: Option<SocketAddr>,
     pub owned: Option<OwnedServer>,
     pub retry_host: bool,
+    pub character_labels: Vec<(String, Action, bool)>,
 }
 impl Default for Session {
     fn default() -> Self {
@@ -57,6 +66,7 @@ impl Default for Session {
             address: None,
             owned: None,
             retry_host: false,
+            character_labels: Vec::new(),
         }
     }
 }
@@ -208,6 +218,33 @@ fn reset(game: &mut Playground) {
 }
 pub fn act(game: &mut Playground, action: Action) -> bool {
     match action {
+        Action::Character => {
+            game.appearance.begin();
+            change(game, Screen::Character);
+        }
+        Action::CharacterField => {
+            game.appearance.field = (game.appearance.field + 1) % 8;
+        }
+        Action::CharacterValue => {
+            let field = game.appearance.field;
+            game.appearance.draft.cycle(field, false);
+            game.appearance.message.clear();
+        }
+        Action::CharacterFacing => {
+            game.appearance.left = !game.appearance.left;
+        }
+        Action::CharacterPose => {
+            game.appearance.pose = (game.appearance.pose + 1) % crate::character::POSES.len();
+        }
+        Action::CharacterApply => {
+            if game.appearance.apply() {
+                change(game, Screen::Main);
+            }
+        }
+        Action::CharacterDefaults => {
+            game.appearance.defaults();
+        }
+
         Action::Quit => {
             reset(game);
             return true;
@@ -250,6 +287,7 @@ pub fn act(game: &mut Playground, action: Action) -> bool {
             game.menu.editor.selected_all = true;
         }
         Action::Back | Action::Cancel => {
+            game.appearance.cancel();
             reset(game);
             game.menu.notice.clear();
             change(game, Screen::Main);
@@ -295,6 +333,7 @@ pub fn act(game: &mut Playground, action: Action) -> bool {
             }
         }
     }
+    character_labels(game);
     false
 }
 pub fn connection_message(status: &ConnectionState) -> String {
@@ -332,14 +371,44 @@ pub fn poll(game: &mut Playground) {
         change(game, Screen::Playing);
     }
 }
+pub fn character_labels(game: &mut Playground) {
+    let a = &game.appearance;
+    game.menu.character_labels = vec![
+        (
+            format!("Edit: {}", crate::appearance::LABELS[a.field]),
+            Action::CharacterField,
+            true,
+        ),
+        (
+            format!("< {} >", a.draft.label(a.field)),
+            Action::CharacterValue,
+            true,
+        ),
+        (
+            format!("Facing: {}", if a.left { "Left" } else { "Right" }),
+            Action::CharacterFacing,
+            true,
+        ),
+        (
+            format!("Pose: {}", crate::character::POSES[a.pose]),
+            Action::CharacterPose,
+            true,
+        ),
+        ("Apply & Save".into(), Action::CharacterApply, true),
+        ("Cancel".into(), Action::Cancel, true),
+        ("Restore Defaults".into(), Action::CharacterDefaults, true),
+    ];
+}
 pub fn controls(session: &Session) -> Vec<(String, Action, bool)> {
     let item = |label: &str, action| (label.to_string(), action, true);
     match session.screen {
+        Screen::Character => session.character_labels.clone(),
         Screen::Main => vec![
             item("Practice", Action::Practice),
             item("Ember Relay Practice / Offline", Action::Ember),
             item("Host Game", Action::Host),
             item("Join Game", Action::Join),
+            item("Character", Action::Character),
             item("Quit", Action::Quit),
         ],
         Screen::Host | Screen::Join => vec![
@@ -473,7 +542,7 @@ pub fn setup(mut commands: Commands) {
                     font(12.),
                     TextColor(color(0xe89a70)),
                 ));
-                for index in 0..5 {
+                for index in 0..7 {
                     card.spawn((
                         Control(index),
                         Button,
@@ -568,6 +637,23 @@ pub fn input(
                     break;
                 }
             }
+        } else if game.menu.screen == Screen::Character
+            && matches!(event.key_code, KeyCode::ArrowLeft | KeyCode::ArrowRight)
+            && !event.repeat
+        {
+            let backwards = event.key_code == KeyCode::ArrowLeft;
+            if game.menu.selected == 0 {
+                game.appearance.field = (game.appearance.field + if backwards { 7 } else { 1 }) % 8;
+            } else if game.menu.selected == 1 {
+                let field = game.appearance.field;
+                game.appearance.draft.cycle(field, backwards);
+                game.appearance.message.clear();
+            } else if game.menu.selected == 2 {
+                game.appearance.left = !game.appearance.left;
+            } else if game.menu.selected == 3 {
+                game.appearance.pose = (game.appearance.pose + if backwards { 5 } else { 1 }) % 6;
+            }
+            character_labels(&mut game);
         } else if matches!(
             event.key_code,
             KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space
@@ -656,7 +742,10 @@ pub fn present(
             Without<Copy>,
         ),
     >,
-    mut labels: Query<(&ControlText, &mut Text, &mut TextColor), (Without<Copy>, Without<Brand>)>,
+    mut labels: Query<
+        (&ControlText, &mut Text, &mut TextColor, &mut TextFont),
+        (Without<Copy>, Without<Brand>),
+    >,
 ) {
     use crate::artwork::{CREAM, CYAN, color};
     root.display = if game.menu.screen == Screen::Playing {
@@ -664,10 +753,11 @@ pub fn present(
     } else {
         Display::Flex
     };
+    let character = game.menu.screen == Screen::Character;
     let compact = window.width() < 850. || window.height() < 540.;
     brand.0.left = if compact { px(20) } else { percent(9) };
     brand.0.top = if compact { px(10) } else { percent(30) };
-    brand.0.display = if compact {
+    brand.0.display = if compact || character {
         Display::None
     } else {
         Display::Flex
@@ -696,9 +786,29 @@ pub fn present(
     });
     card.padding = UiRect::all(px(if compact { 12. } else { 20. }));
     card.row_gap = px(if compact { 6. } else { 10. });
+    if character {
+        card.left = px(if compact {
+            (window.width() - 288.).max(160.)
+        } else {
+            window.width() * 0.51
+        });
+        card.top = px(if compact {
+            6.
+        } else {
+            (window.height() - 470.) / 2.
+        });
+        card.width = px(if compact {
+            window.width() - ((window.width() - 288.).max(160.)) - 6.
+        } else {
+            (window.width() * 0.46).min(520.)
+        });
+        card.padding = UiRect::all(px(if compact { 8. } else { 18. }));
+        card.row_gap = px(if compact { 3. } else { 8. });
+    }
     let session = &game.menu;
     let items = controls(session);
     let (title, detail) = match session.screen {
+        Screen::Character => ("CHARACTER", "Offline practice only".into()),
         Screen::Main => (if compact { "BURNHOP" } else { "READY, PILOT?" }, "Boots on. Pick your next drop.".into()),
         Screen::Host => ("HOST GAME", format!("Bind IP:port / {}\n{}", match address(&session.editor.text) { Ok(a) if a.ip().is_loopback() => "LOCAL ONLY", Ok(_) => "LAN INTERFACE", Err(_) => "ENTER AN ADDRESS" }, "For friends, enter this Mac/PC's LAN IP. No internet setup.")),
         Screen::Join => ("JOIN GAME", "Server IP:port / numeric IPv4 or [IPv6]:port\nUse the address shared by your host.".into()),
@@ -708,7 +818,9 @@ pub fn present(
         Screen::Error => (if session.retry_host { "UNABLE TO HOST" } else { "CONNECTION ENDED" }, "You can edit the address and try again.".into()),
         Screen::Playing => ("", String::new()),
     };
-    let validation = if matches!(session.screen, Screen::Host | Screen::Join) {
+    let validation = if character {
+        game.appearance.message.clone()
+    } else if matches!(session.screen, Screen::Host | Screen::Join) {
         address(&session.editor.text).err().unwrap_or_default()
     } else {
         session.notice.clone()
@@ -736,7 +848,14 @@ pub fn present(
                 };
             }
             _ => {
-                text.0 = if matches!(session.screen, Screen::Host | Screen::Join)
+                node.display = if character && compact && !validation.is_empty() {
+                    Display::None
+                } else {
+                    Display::Flex
+                };
+                text.0 = if character {
+                    "Tab Select / Left-Right Change\nEnter Next / Esc Cancel"
+                } else if matches!(session.screen, Screen::Host | Screen::Join)
                     && session.selected == 0
                 {
                     "Left/Right Home End  Edit / Ctrl/Cmd+A  Select all\nTab  Next   Esc  Back"
@@ -753,8 +872,23 @@ pub fn present(
             continue;
         };
         node.display = Display::Flex;
-        node.min_height = px(36.);
-        node.padding = UiRect::axes(px(10), px(if compact { 5. } else { 7. }));
+        node.min_height = px(if character && compact {
+            25.
+        } else if compact && session.screen == Screen::Main {
+            30.
+        } else {
+            36.
+        });
+        node.padding = UiRect::axes(
+            px(8),
+            px(if character && compact {
+                2.
+            } else if compact {
+                4.
+            } else {
+                7.
+            }),
+        );
         background.0 = color(if !enabled {
             0x293632
         } else if *interaction == Interaction::Pressed {
@@ -770,7 +904,8 @@ pub fn present(
             0x59614d
         }));
     }
-    for (control, mut text, mut tint) in &mut labels {
+    for (control, mut text, mut tint, mut font) in &mut labels {
+        font.font_size = if character && compact { 12. } else { 15. }.into();
         if let Some((label, _, enabled)) = items.get(control.0) {
             text.0 = label.clone();
             tint.0 = color(if *enabled { CREAM } else { 0x819080 });
